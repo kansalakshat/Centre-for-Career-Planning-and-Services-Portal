@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 const safeDate = z
-  .union([z.coerce.date(), z.literal("")])
+  .union([
+    z.string().min(1).pipe(z.coerce.date()),
+    z.literal("")
+  ])
   .transform((val) => (val === "" ? undefined : val))
   .optional();
 
