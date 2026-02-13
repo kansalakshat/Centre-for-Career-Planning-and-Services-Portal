@@ -17,7 +17,11 @@ export const createJobSchema = z.object({
     Type: z.enum(["on-campus", "off-campus"], {
       error: "Type must be either 'on-campus' or 'off-campus'",
     }),
-    batch: z.coerce.number({ error: "Batch is required" }),
+    batch: z.coerce
+      .number()
+      .int("Batch must be an integer")
+      .min(2020, "Batch must be a valid year")
+      .max(2100, "Batch must be a valid year"),
     Deadline: safeDate,
     ApplicationLink: z.union([z.string().url("Invalid application link"), z.literal("")]).transform(val => val === "" ? undefined : val).optional(),
     Expiry: safeDate,
