@@ -1,3 +1,5 @@
+import { ZodError } from "zod";
+
 export const validate = (schema) => (req, res, next) => {
   try {
     const parsed = schema.parse({
@@ -12,8 +14,8 @@ export const validate = (schema) => (req, res, next) => {
 
     next();
   } catch (error) {
-    if (error.name === "ZodError") {
-      const formattedErrors = error.errors.map((err) => ({
+    if (error instanceof ZodError) {
+      const formattedErrors = error.issues.map((err) => ({
         field: err.path.join("."),
         message: err.message,
       }));

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-const emptyToUndefined = z.preprocess((val) => (val === "" ? undefined : val), z.any());
+const safeDate = z
+  .union([z.coerce.date(), z.literal("")])
+  .transform((val) => (val === "" ? undefined : val))
+  .optional();
 
 export const createJobSchema = z.object({
   body: z.object({
@@ -9,13 +12,11 @@ export const createJobSchema = z.object({
     Company: z.string().min(1, "Company name is required"),
     requiredSkills: z.array(z.string()).optional(),
     Type: z.enum(["on-campus", "off-campus"], {
-      errorMap: () => ({ message: "Type must be either 'on-campus' or 'off-campus'" }),
+      error: "Type must be either 'on-campus' or 'off-campus'",
     }),
-    batch: z.coerce.number({ required_error: "Batch is required" }),
-    Deadline: emptyToUndefined.pipe(z.coerce.date().optional()),
-    ApplicationLink: emptyToUndefined.pipe(z.string().url("Invalid application link").optional()),
-    Expiry: emptyToUndefined.pipe(z.coerce.date().optional()),
-    author: z.string().optional(),
-    relevanceScore: z.coerce.number().optional(),
+    batch: z.coerce.number({ error: "Batch is required" }),
+    Deadline: safeDate,
+    ApplicationLink: z.union([z.string().url("Invalid application link"), z.literal("")]).transform(val => val === "" ? undefined : val).optional(),
+    Expiry: safeDate,
   }),
 });
