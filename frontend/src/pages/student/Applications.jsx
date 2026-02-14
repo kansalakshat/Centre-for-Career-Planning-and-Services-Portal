@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchJobs, fetchMyApplications, fetchAppliedJobs } from "../../api/useApply";
 import Sidebar from "../../components/Sidebar";
 import ApplyModal from "../../components/ApplyModel";
-import { saveJob } from "../../api/useSavedJobs";
+import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
 
 import JobCard from "../../components/JobCard";
 
@@ -21,6 +21,7 @@ const userData = {
 const Applications = () => {
   const [jobs, setJobs] = useState([]);
   const [myApps, setMyApps] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]); // NEW STATE
   const [appliedJobsList, setAppliedJobsList] = useState([]); // NEW STATE
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,17 +36,17 @@ const Applications = () => {
 
   const loadAll = async () => {
     try {
-      const [jobList, { onCampus, offCampus }, dedicatedAppliedList] = await Promise.all([
+      const [jobList, { onCampus, offCampus }, dedicatedAppliedList, savedList] = await Promise.all([
         fetchJobs(),
         fetchMyApplications(),
-
         fetchAppliedJobs(), // Fetch dedicated applied list
-
+        fetchSavedApplications(), // Fetch saved jobs
         fetchProfile(),
       ]);
       setJobs(jobList);
       setMyApps([...onCampus, ...offCampus]);
       setAppliedJobsList(dedicatedAppliedList); // Set new state
+      setSavedJobs(savedList);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load jobs/applications");
@@ -97,12 +98,25 @@ const Applications = () => {
 
   const handleSaveJob = async (jobId) => {
     try {
-      const token = localStorage.getItem("ccps-token");
-      await saveJob(jobId, token);
-      toast.success("Job saved!");
+      const isAlreadySaved = savedJobs.some(s => s.jobId._id === jobId || s.jobId === jobId);
+
+      if (isAlreadySaved) {
+        await unsaveJob(jobId);
+        toast.success("Job unsaved!");
+        setSavedJobs(prev => prev.filter(s => (s.jobId._id || s.jobId) !== jobId));
+      } else {
+        await saveJob(jobId);
+        toast.success("Job saved!");
+        // We might want to re-fetch or optimistically update. 
+        // For simplicity, let's just re-fetch saved jobs to be sure we have the full object if needed, 
+        // or just append a placeholder if structure allows.
+        // Let's re-fetch for now to be safe.
+        const updatedSaved = await fetchSavedApplications();
+        setSavedJobs(updatedSaved);
+      }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to save job.");
+      toast.error("Failed to update job save status.");
     }
   };
 
@@ -144,6 +158,7 @@ const Applications = () => {
             key={job._id}
             job={job}
             myApps={myApps}
+            savedJobs={savedJobs}
             openApplyModal={openApplyModal}
             handleSaveJob={handleSaveJob}
           />
@@ -228,6 +243,7 @@ const Applications = () => {
                         Type: job.Type || 'Off-Campus' // Default type if missing
                       }}
                       myApps={appliedJobsList} // Pass the dedicated list for status check
+                      savedJobs={savedJobs}
                       isAppliedJob={true}
                     />
                   ))}

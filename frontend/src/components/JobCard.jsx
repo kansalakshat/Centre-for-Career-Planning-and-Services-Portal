@@ -1,11 +1,17 @@
 import React from 'react';
 
-const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob }) => {
+const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, savedJobs = [] }) => {
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
             : a.jobId;
         return applicationJobId === job._id;
+    });
+
+    // Check if job is saved
+    const isSaved = savedJobs.some(s => {
+        const savedJobId = s.jobId && typeof s.jobId === 'object' ? s.jobId._id : s.jobId;
+        return savedJobId === job._id;
     });
 
     const applied = isAppliedJob || !!application;
@@ -102,12 +108,25 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob }) =
                                 </button>
                                 <button
                                     onClick={() => handleSaveJob(job._id)}
-                                    className="inline-flex items-center px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-semibold rounded-xl shadow-lg transition-all duration-200"
+                                    className={`inline-flex items-center px-4 py-2.5 text-white text-sm font-semibold rounded-xl shadow-lg transition-all duration-200 ${isSaved
+                                        ? "bg-emerald-500 hover:bg-emerald-600"
+                                        : "bg-yellow-500 hover:bg-yellow-600"}`}
                                 >
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Save
+                                    {isSaved ? (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Saved
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Save
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         )}
