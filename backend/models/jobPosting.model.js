@@ -47,8 +47,25 @@ const jobPostingSchema = new mongoose.Schema({
     downvotedBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
-    }]
-}); 
+    }],
+    source: {
+        type: String,
+        default: "Internal"
+    },
+    externalId: {
+        type: String,
+    },
+    originalLink: {
+        type: String,
+    },
+    isScraped: {
+        type: Boolean,
+        default: false,
+    },
+    location: {
+        type: String,
+    }
+});
 
 const JobPosting = mongoose.model("JobPosting", jobPostingSchema);
 

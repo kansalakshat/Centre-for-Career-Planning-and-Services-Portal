@@ -7,7 +7,7 @@ import apiRouter from "./routes/index.router.js";
 dotenv.config();
 
 const port = process.env.PORT || 3000;
-  
+
 const app = express();
 
 app.use(
@@ -25,9 +25,12 @@ app.use(express.urlencoded({ extended: true }));
 // Use all API routes
 app.use("/api", apiRouter);
 
+import scheduleJobs from "./utils/scheduler.js";
+
 // Start the server
 app.listen(port, () => {
   connectDB();
+  scheduleJobs();
   console.log(`Server is running at port ${port}`);
 });
 
