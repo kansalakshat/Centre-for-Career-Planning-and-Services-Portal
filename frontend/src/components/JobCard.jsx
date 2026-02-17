@@ -92,20 +92,39 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                             </span>
                         ) : (
                             <div className="flex gap-2">
-                                <button
-                                    onClick={() => openApplyModal(job)}
-                                    className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
-                                >
-                                    <svg
-                                        className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform duration-200"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                {job.isScraped ? (
+                                    <a
+                                        href={job.originalLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Apply Now
-                                </button>
+                                        <svg
+                                            className="w-4 h-4 mr-2 group-hover/btn:translate-x-1 transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        Apply on {job.source || 'External'}
+                                    </a>
+                                ) : (
+                                    <button
+                                        onClick={() => openApplyModal(job)}
+                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
+                                    >
+                                        <svg
+                                            className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Apply Now
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => handleSaveJob(job._id)}
                                     className={`inline-flex items-center px-4 py-2.5 text-white text-sm font-semibold rounded-xl shadow-lg transition-all duration-200 ${isSaved

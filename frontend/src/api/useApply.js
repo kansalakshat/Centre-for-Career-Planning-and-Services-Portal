@@ -15,8 +15,8 @@ export const fetchJobs = async () => {
 
   try {
     // Pass headers to the GET request
-    const res = await axiosInstance.get('/api/jobs', { headers }); 
-    
+    const res = await axiosInstance.get('/api/jobs?limit=1000', { headers });
+
     // Check if the response data is an array directly, or if it's nested (e.g., res.data.jobs)
     const jobs = Array.isArray(res.data) ? res.data : res.data.jobs || [];
     console.log('Fetched Jobs Data:', jobs);
@@ -40,9 +40,9 @@ export const fetchMyApplications = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-    
+
     // The backend controller returns onCampusApplications and offCampusApplications
-    return { 
+    return {
       onCampus: res.data.onCampusApplications || [],
       offCampus: res.data.offCampusApplications || [],
     };
