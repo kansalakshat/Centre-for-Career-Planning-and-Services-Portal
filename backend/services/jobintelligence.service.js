@@ -15,9 +15,11 @@ export const getIntelligentFeed = async (user, queryParams) => {
         order
     } = queryParams;
 
-    const matchStage = {};
-    // automatically hides expired jobs
-    matchStage.Expiry = { $gte: new Date() };
+    matchStage.$or = [
+    { Expiry: { $gte: new Date() } },
+    { Expiry: { $exists: false } },
+    { Expiry: null }
+    ];
 
 
     // Exact matches
@@ -111,8 +113,8 @@ export const getIntelligentFeed = async (user, queryParams) => {
         });
     }
 
-    pipeline.push({ $skip: skip });
-    pipeline.push({ $limit: limitNum });
+    // pipeline.push({ $skip: skip });
+    // pipeline.push({ $limit: limitNum });
 
     const jobPostings = await JobPosting.aggregate(pipeline);
 
@@ -171,8 +173,9 @@ export const getIntelligentFeed = async (user, queryParams) => {
         let skillMatchScore = 0;
 
         if (user?.skills && job.requiredSkills?.length) {
+            const userSkillsLower = user.skills.map(s => s.toLowerCase());
             const matches = job.requiredSkills.filter(skill =>
-                user.skills.includes(skill)
+                userSkillsLower.includes(skill.toLowerCase())
             );
 
             skillMatchScore = matches.length / job.requiredSkills.length;
@@ -214,6 +217,7 @@ export const getIntelligentFeed = async (user, queryParams) => {
     enrichedJobs.sort((a, b) => {
         return b.priorityScore - a.priorityScore;
     });
+    const paginatedJobs = enrichedJobs.slice(skip, skip + limitNum);
 
     return {
         message: "Job postings retrieved successfully",
@@ -221,6 +225,6 @@ export const getIntelligentFeed = async (user, queryParams) => {
         limit: limitNum,
         totalJobs,
         totalPages,
-        jobs: enrichedJobs
+        jobs: paginatedJobs
     };
 };

@@ -118,7 +118,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                                 Alumni Connections
                             </p>
 
-                            {job.alumniList.map((alum, idx) => (
+                            {Array.isArray(job.alumniList) && job.alumniList.map((alum, idx) => (
                                 <div key={idx} className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                                     <div className="font-medium text-gray-700 dark:text-gray-200">
                                         {alum.name}
