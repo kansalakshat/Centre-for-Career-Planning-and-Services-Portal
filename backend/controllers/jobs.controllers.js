@@ -256,7 +256,7 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 export const jobRelevanceScoreUpvote = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.body.userId; // user ID from request
+        const userId = req.userId;
 
         if (!isValidObjectId(userId)) {
             return res.status(400).json({ message: 'Invalid user ID' });
@@ -304,7 +304,7 @@ export const jobRelevanceScoreUpvote = async (req, res) => {
 export const jobRelevanceScoreDownvote = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.body.userId; // user ID from request
+        const userId = req.userId;
 
         if (!isValidObjectId(userId)) {
             return res.status(400).json({ message: 'Invalid user ID' });
