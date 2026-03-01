@@ -3,33 +3,13 @@ import mongoose from 'mongoose';
 
 export const jobCreate = async (req, res) => {
     try {
-        const {
-            jobTitle,
-            jobDescription,
-            Company,
-            requiredSkills,
-            Type,
-            batch,
-            Deadline,
-            ApplicationLink,
-            Expiry,
-            author,
-            relevanceScore
-        } = req.body;
+        const jobData = {
+            ...req.body,
+            author: req.userId,
+            relevanceScore: 0 // Ensure it starts at 0
+        };
         // Create a new job posting instance
-        const newJobPosting = new JobPosting({
-            jobTitle,
-            jobDescription,
-            Company,
-            requiredSkills,
-            Type,
-            batch,
-            Deadline,
-            ApplicationLink,
-            Expiry,
-            author,
-            relevanceScore
-        });
+        const newJobPosting = new JobPosting(jobData);
 
         // Save the job posting to the database
         await newJobPosting.save();
@@ -52,7 +32,12 @@ export const jobCreate = async (req, res) => {
 export const jobUpdate = async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedData = req.body;
+        const updatedData = { ...req.body };
+        
+        // Prevent client from overriding server-controlled fields
+        delete updatedData.author;
+        delete updatedData.relevanceScore;
+
         const updatedJobPosting = await JobPosting.findByIdAndUpdate(id, updatedData, {
             new: true, // Return the updated document
             runValidators: true // Ensure the updated data adheres to the schema
