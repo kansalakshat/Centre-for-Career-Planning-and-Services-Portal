@@ -14,8 +14,9 @@ const AdminJobList = () => {
     isError,
     error
   } = useQuery({
-    queryKey: ['jobs'],
-    queryFn: () => fetchJobs(token)
+    queryKey: ['jobs', token],
+    queryFn: () => fetchJobs(token),
+    enabled: !!token
   });
 
   const jobs = data?.jobs || [];
@@ -49,7 +50,7 @@ const AdminJobList = () => {
         <h2 className="text-2xl font-semibold mb-4 dark:text-white">All Job Postings</h2>
 
         {jobs.length === 0 && (
-          <p className="text-red-500">No job data found or API failed.</p>
+          <p className="text-red-500">No job postings available.</p>
         )}
 
         <div className="grid gap-4">
