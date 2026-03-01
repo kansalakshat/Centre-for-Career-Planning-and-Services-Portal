@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema({
     address: {
         type: String,
         default: ''
+    },
+    batch: {
+        type: Number,
+        required: false
+    },
+    skills: {
+        type: [String],
+        default: []
     }
 })
 

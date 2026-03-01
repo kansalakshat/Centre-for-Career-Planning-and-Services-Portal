@@ -6,7 +6,10 @@ const alumniSchema = new mongoose.Schema({
     required: true,
   },
   company: {
-    type: String,
+  type: String,
+  required: true,
+  lowercase: true,
+  trim: true
   },
   linkedin: {
     type: String,

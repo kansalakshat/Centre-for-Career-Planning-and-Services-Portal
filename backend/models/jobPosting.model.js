@@ -10,8 +10,10 @@ const jobPostingSchema = new mongoose.Schema({
         required: true,
     },
     Company: {
-        type: String,
-        required: true,
+    type: String,
+    required: true,
+    lowercase: true,
+    trim: true
     },
     requiredSkills: [{
         type: String,
