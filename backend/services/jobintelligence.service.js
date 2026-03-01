@@ -15,6 +15,8 @@ export const getIntelligentFeed = async (user, queryParams) => {
         order
     } = queryParams;
 
+    
+    const matchStage = {};
     matchStage.$or = [
     { Expiry: { $gte: new Date() } },
     { Expiry: { $exists: false } },
