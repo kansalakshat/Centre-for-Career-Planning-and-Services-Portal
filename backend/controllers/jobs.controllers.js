@@ -15,7 +15,9 @@ export const jobList = async (req, res) => {
     if (
         error.message.includes("Invalid job type") ||
         error.message.includes("Invalid batch") ||
-        error.message.includes("Invalid pagination")
+        error.message.includes("Invalid pagination") ||
+        error.message.includes("Invalid sort field") ||
+        error.message.includes("Invalid sort order")
     ) {
         return res.status(400).json({ message: error.message });
     }
