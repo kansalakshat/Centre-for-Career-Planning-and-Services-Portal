@@ -1,29 +1,47 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "../../components/Sidebar";
-
-const ROOT = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-const BASE_URL = ROOT.replace(/\/$/, '') + '/api';
+import { fetchJobs } from "../../api/jobsApi";
 
 const AdminJobList = () => {
-  const [jobs, setJobs] = useState([]);
   const navigate = useNavigate();
+  const token = localStorage.getItem("ccps-token");
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const token = localStorage.getItem("ccps-token");
-        const res = await axios.get(`${BASE_URL}/jobs`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setJobs(res.data.jobs || []);
-      } catch (error) {
-        console.error("Error fetching jobs:", error.response?.data || error.message);
-      }
-    };
-    fetchJobs();
-  }, []);
+  const {
+    data,
+    isLoading,
+    isError,
+    error
+  } = useQuery({
+    queryKey: ['jobs', token],
+    queryFn: () => fetchJobs(token),
+    enabled: !!token
+  });
+
+  const jobs = data?.jobs || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="p-6 flex-1 text-center">
+          <p className="text-xl dark:text-white">Loading job postings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="p-6 flex-1 text-center">
+          <p className="text-xl text-red-500">Something went wrong: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -32,7 +50,7 @@ const AdminJobList = () => {
         <h2 className="text-2xl font-semibold mb-4 dark:text-white">All Job Postings</h2>
 
         {jobs.length === 0 && (
-          <p className="text-red-500">No job data found or API failed. Check console.</p>
+          <p className="text-red-500">No job postings available.</p>
         )}
 
         <div className="grid gap-4">
