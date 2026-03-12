@@ -18,7 +18,7 @@ router.post("/", protectRoute, authorizeRoles("admin"), validate(createJobSchema
 router.put("/:id", protectRoute, authorizeRoles("admin"), validate(updateJobSchema), jobUpdate);
 router.delete("/:id", protectRoute, authorizeRoles("admin"), validate(paramIdSchema), jobDelete);
 router.get('/', protectRoute, jobList);
-router.get('/upvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreUpvote);
-router.get('/downvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreDownvote);
+router.post('/upvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreUpvote);
+router.post('/downvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreDownvote);
 
 export default router;

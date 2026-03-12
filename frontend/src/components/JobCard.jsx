@@ -1,6 +1,153 @@
 import React from 'react';
+import { useAuthContext } from '../context/AuthContext';
+import { upvoteJob, downvoteJob } from '../api/jobsApi';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, savedJobs = [] }) => {
+    const { authUser } = useAuthContext();
+    const queryClient = useQueryClient();
+
+    const relevanceScore = job.relevanceScore || 0;
+
+    // Determine initial vote status from job data
+    const voteStatus = job.upvotedBy?.some(voterId => 
+        (typeof voterId === 'object' ? voterId._id : voterId) === authUser?._id
+    ) ? 'up' : job.downvotedBy?.some(voterId => 
+        (typeof voterId === 'object' ? voterId._id : voterId) === authUser?._id
+    ) ? 'down' : null;
+
+    const upvoteMutation = useMutation({
+        mutationFn: () => upvoteJob(job._id, localStorage.getItem("ccps-token")),
+        onMutate: async () => {
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: ['jobs'] });
+
+            // Snapshot the previous value
+            const previousJobs = queryClient.getQueryData(['jobs']);
+
+            // Calculate the score change based on current vote status
+            let scoreChange = 0;
+            if (voteStatus === 'up') {
+                scoreChange = -1; // Toggle off
+            } else if (voteStatus === 'down') {
+                scoreChange = 2; // Switch from down to up
+            } else {
+                scoreChange = 1; // Neutral to up
+            }
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(['jobs'], (old) => {
+                if (!old) return old;
+
+                // Handle both array and nested object structure
+                const updateJobInList = (jobsList) => 
+                    jobsList.map((j) => 
+                        j._id === job._id 
+                            ? { ...j, relevanceScore: (j.relevanceScore || 0) + scoreChange } 
+                            : j
+                    );
+
+                if (Array.isArray(old)) {
+                    return updateJobInList(old);
+                } else if (old.jobs && Array.isArray(old.jobs)) {
+                    return {
+                        ...old,
+                        jobs: updateJobInList(old.jobs)
+                    };
+                }
+                return old;
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousJobs };
+        },
+        onError: (err, newVote, context) => {
+            // If the mutation fails, use the context returned from onMutate to roll back
+            if (context?.previousJobs) {
+                queryClient.setQueryData(['jobs'], context.previousJobs);
+            }
+            console.error("Failed to upvote:", err);
+        },
+        onSettled: () => {
+            // Always refetch after error or success to keep server and client in sync
+            queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        }
+    });
+
+    const downvoteMutation = useMutation({
+        mutationFn: () => downvoteJob(job._id, localStorage.getItem("ccps-token")),
+        onMutate: async () => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({ queryKey: ['jobs'] });
+
+            // Snapshot the previous value
+            const previousJobs = queryClient.getQueryData(['jobs']);
+
+            // Calculate the score change based on current vote status
+            let scoreChange = 0;
+            if (voteStatus === 'down') {
+                scoreChange = 1; // Toggle off
+            } else if (voteStatus === 'up') {
+                scoreChange = -2; // Switch from up to down
+            } else {
+                scoreChange = -1; // Neutral to down
+            }
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(['jobs'], (old) => {
+                if (!old) return old;
+
+                // Handle both array and nested object structure
+                const updateJobInList = (jobsList) => 
+                    jobsList.map((j) => 
+                        j._id === job._id 
+                            ? { ...j, relevanceScore: (j.relevanceScore || 0) + scoreChange } 
+                            : j
+                    );
+
+                if (Array.isArray(old)) {
+                    return updateJobInList(old);
+                } else if (old.jobs && Array.isArray(old.jobs)) {
+                    return {
+                        ...old,
+                        jobs: updateJobInList(old.jobs)
+                    };
+                }
+                return old;
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousJobs };
+        },
+        onError: (err, newVote, context) => {
+            // If the mutation fails, roll back
+            if (context?.previousJobs) {
+                queryClient.setQueryData(['jobs'], context.previousJobs);
+            }
+            console.error("Failed to downvote:", err);
+        },
+        onSettled: () => {
+            // Always refetch
+            queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        }
+    });
+
+    const handleUpvote = () => {
+        if (!authUser) {
+            alert("Please login to vote");
+            return;
+        }
+        upvoteMutation.mutate();
+    };
+
+    const handleDownvote = () => {
+        if (!authUser) {
+            alert("Please login to vote");
+            return;
+        }
+        downvoteMutation.mutate();
+    };
+
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
@@ -131,35 +278,60 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                             </div>
                         )}
                     </div>
-                    {!applied && (
-                        <div className="text-right">
-                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                <svg
-                                    className="w-4 h-4 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4h6m-6 4h6M6 7v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2z"
-                                    />
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center bg-gray-50 dark:bg-gray-700/30 rounded-lg p-1 gap-1 border border-gray-100 dark:border-gray-700/50">
+                            <button
+                                onClick={handleUpvote}
+                                className={`p-1 rounded transition-all duration-200 ${voteStatus === 'up' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/10'}`}
+                                title="Upvote relevance"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                 </svg>
-                                Deadline
-                            </div>
-                            <p className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
-                                {job.Deadline
-                                    ? new Date(job.Deadline).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                    })
-                                    : "Open"}
-                            </p>
+                            </button>
+                            <span className="text-xs font-bold text-gray-700 dark:text-gray-300 min-w-[12px] text-center">
+                                {relevanceScore}
+                            </span>
+                            <button
+                                onClick={handleDownvote}
+                                className={`p-1 rounded transition-all duration-200 ${voteStatus === 'down' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' : 'text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
+                                title="Downvote relevance"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
                         </div>
-                    )}
+                        {!applied && (
+                            <div className="text-right">
+                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                    <svg
+                                        className="w-4 h-4 mr-1"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4h6m-6 4h6M6 7v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2z"
+                                        />
+                                    </svg>
+                                    Deadline
+                                </div>
+                                <p className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
+                                    {job.Deadline
+                                        ? new Date(job.Deadline).toLocaleDateString("en-US", {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                        })
+                                        : "Open"}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

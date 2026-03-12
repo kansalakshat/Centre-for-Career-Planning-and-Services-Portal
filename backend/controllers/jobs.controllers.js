@@ -267,12 +267,20 @@ export const jobRelevanceScoreUpvote = async (req, res) => {
             return res.status(404).json({ message: 'Job posting not found' });
         }
 
-        if (jobPosting.upvotedBy.includes(userId)) {
-            return res.status(400).json({ message: 'Already upvoted' });
-        }
+        // Initialize fields if missing
+        jobPosting.relevanceScore = jobPosting.relevanceScore || 0;
+        jobPosting.upvotedBy = jobPosting.upvotedBy || [];
+        jobPosting.downvotedBy = jobPosting.downvotedBy || [];
 
-        // Switch vote if previously downvoted
-        if (jobPosting.downvotedBy.includes(userId)) {
+        const alreadyUpvoted = jobPosting.upvotedBy.some(voterId => voterId.toString() === userId.toString());
+        const alreadyDownvoted = jobPosting.downvotedBy.some(voterId => voterId.toString() === userId.toString());
+
+        if (alreadyUpvoted) {
+            // Toggle off: remove upvote
+            jobPosting.upvotedBy.pull(userId);
+            jobPosting.relevanceScore -= 1;
+        } else if (alreadyDownvoted) {
+            // Switch from downvote to upvote
             jobPosting.downvotedBy.pull(userId);
             jobPosting.upvotedBy.push(userId);
             jobPosting.relevanceScore += 2;
@@ -285,10 +293,10 @@ export const jobRelevanceScoreUpvote = async (req, res) => {
         await jobPosting.save();
 
         res.status(200).json({
-            message: 'Relevance score upvoted successfully',
+            message: alreadyUpvoted ? 'Upvote removed' : 'Relevance score upvoted successfully',
             job: jobPosting,
             userVote: {
-                upvoted: true,
+                upvoted: !alreadyUpvoted,
                 downvoted: false
             }
         });
@@ -315,12 +323,20 @@ export const jobRelevanceScoreDownvote = async (req, res) => {
             return res.status(404).json({ message: 'Job posting not found' });
         }
 
-        if (jobPosting.downvotedBy.includes(userId)) {
-            return res.status(400).json({ message: 'Already downvoted' });
-        }
+        // Initialize fields if missing
+        jobPosting.relevanceScore = jobPosting.relevanceScore || 0;
+        jobPosting.upvotedBy = jobPosting.upvotedBy || [];
+        jobPosting.downvotedBy = jobPosting.downvotedBy || [];
 
-        // Switch vote if previously upvoted
-        if (jobPosting.upvotedBy.includes(userId)) {
+        const alreadyUpvoted = jobPosting.upvotedBy.some(voterId => voterId.toString() === userId.toString());
+        const alreadyDownvoted = jobPosting.downvotedBy.some(voterId => voterId.toString() === userId.toString());
+
+        if (alreadyDownvoted) {
+            // Toggle off: remove downvote
+            jobPosting.downvotedBy.pull(userId);
+            jobPosting.relevanceScore += 1;
+        } else if (alreadyUpvoted) {
+            // Switch from upvote to downvote
             jobPosting.upvotedBy.pull(userId);
             jobPosting.downvotedBy.push(userId);
             jobPosting.relevanceScore -= 2;
@@ -333,11 +349,11 @@ export const jobRelevanceScoreDownvote = async (req, res) => {
         await jobPosting.save();
 
         res.status(200).json({
-            message: 'Relevance score downvoted successfully',
+            message: alreadyDownvoted ? 'Downvote removed' : 'Relevance score downvoted successfully',
             job: jobPosting,
             userVote: {
                 upvoted: false,
-                downvoted: true
+                downvoted: !alreadyDownvoted
             }
         });
     } catch (error) {

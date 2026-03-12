@@ -30,3 +30,17 @@ export const createJobPosting = async (jobData, token) => {
   });
   return data;
 };
+
+export const upvoteJob = async (jobId, token) => {
+  const { data } = await axios.post(`${BASE_URL}/jobs/upvote/${jobId}`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+};
+
+export const downvoteJob = async (jobId, token) => {
+  const { data } = await axios.post(`${BASE_URL}/jobs/downvote/${jobId}`, {}, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+};

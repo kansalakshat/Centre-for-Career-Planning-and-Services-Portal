@@ -14,7 +14,7 @@ const AdminJobList = () => {
     isError,
     error
   } = useQuery({
-    queryKey: ['jobs', token],
+    queryKey: ['jobs'],
     queryFn: () => fetchJobs(token),
     enabled: !!token
   });
