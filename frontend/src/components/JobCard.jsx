@@ -41,11 +41,31 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
 
                 // Handle both array and nested object structure
                 const updateJobInList = (jobsList) => 
-                    jobsList.map((j) => 
-                        j._id === job._id 
-                            ? { ...j, relevanceScore: (j.relevanceScore || 0) + scoreChange } 
-                            : j
-                    );
+                    jobsList.map((j) => {
+                        if (j._id !== job._id) return j;
+
+                        let newUpvotedBy = [...(j.upvotedBy || [])];
+                        let newDownvotedBy = [...(j.downvotedBy || [])];
+                        
+                        const userId = authUser?._id;
+                        const checkId = (id) => (typeof id === 'object' ? id._id : id);
+
+                        if (voteStatus === 'up') {
+                            newUpvotedBy = newUpvotedBy.filter(id => checkId(id) !== userId);
+                        } else if (voteStatus === 'down') {
+                            newDownvotedBy = newDownvotedBy.filter(id => checkId(id) !== userId);
+                            newUpvotedBy.push(userId);
+                        } else {
+                            newUpvotedBy.push(userId);
+                        }
+
+                        return { 
+                            ...j, 
+                            relevanceScore: (j.relevanceScore || 0) + scoreChange,
+                            upvotedBy: newUpvotedBy,
+                            downvotedBy: newDownvotedBy
+                        };
+                    });
 
                 if (Array.isArray(old)) {
                     return updateJobInList(old);
@@ -99,11 +119,31 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
 
                 // Handle both array and nested object structure
                 const updateJobInList = (jobsList) => 
-                    jobsList.map((j) => 
-                        j._id === job._id 
-                            ? { ...j, relevanceScore: (j.relevanceScore || 0) + scoreChange } 
-                            : j
-                    );
+                    jobsList.map((j) => {
+                        if (j._id !== job._id) return j;
+
+                        let newUpvotedBy = [...(j.upvotedBy || [])];
+                        let newDownvotedBy = [...(j.downvotedBy || [])];
+                        
+                        const userId = authUser?._id;
+                        const checkId = (id) => (typeof id === 'object' ? id._id : id);
+
+                        if (voteStatus === 'down') {
+                            newDownvotedBy = newDownvotedBy.filter(id => checkId(id) !== userId);
+                        } else if (voteStatus === 'up') {
+                            newUpvotedBy = newUpvotedBy.filter(id => checkId(id) !== userId);
+                            newDownvotedBy.push(userId);
+                        } else {
+                            newDownvotedBy.push(userId);
+                        }
+
+                        return { 
+                            ...j, 
+                            relevanceScore: (j.relevanceScore || 0) + scoreChange,
+                            upvotedBy: newUpvotedBy,
+                            downvotedBy: newDownvotedBy
+                        };
+                    });
 
                 if (Array.isArray(old)) {
                     return updateJobInList(old);
