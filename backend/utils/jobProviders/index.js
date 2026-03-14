@@ -1,4 +1,5 @@
 import { fetchAdzunaJobs } from './adzuna.js';
+import { fetchJoobleJobs } from './jooble.js';
 
 export const fetchExternalJobs = async () => {
     console.log('Starting external job fetch...');
@@ -6,7 +7,8 @@ export const fetchExternalJobs = async () => {
     // Fetch from Adzuna
     const adzunaJobs = await fetchAdzunaJobs();
 
-    // Future: Fetch from Jooble, etc.
+    // Fetch from Jooble
+    const joobleJobs = await fetchJoobleJobs();
 
-    return [...adzunaJobs];
+    return [...adzunaJobs, ...joobleJobs];
 };
