@@ -124,6 +124,9 @@ const Applications = () => {
   };
 
   const availableSources = Array.from(new Set(jobs.map(j => j.source || 'Internal'))).filter(Boolean);
+  const availableLocations = Array.from(new Set(jobs.map(j => 
+    j.location || (j.JobLocation && j.JobLocation.length > 0 ? j.JobLocation[0] : '')
+  ))).filter(Boolean).sort();
 
   const filteredJobs = jobs.filter((job) => {
     // 1. Search by Title or Company
@@ -142,9 +145,21 @@ const Applications = () => {
     return searchMatch && sourceMatch && locationMatch;
   });
 
+  // Helper to extract the highest numerical salary value from strings like "12.0 LPA" or "6.0-20.0 LPA"
+  const getMaxSalary = (salaryStr) => {
+    if (!salaryStr || salaryStr === "Not Disclosed") return 0;
+    // Extract all numbers (integers or decimals) from the string
+    const numbers = salaryStr.match(/\d+(\.\d+)?/g);
+    if (!numbers) return 0;
+    // Return the maximum number found (so "6.0-20.0" returns 20.0)
+    return Math.max(...numbers.map(Number));
+  };
+
   const grouped = {
     onCampus: filteredJobs.filter((job) => job.Type === "on-campus"),
-    offCampus: filteredJobs.filter((job) => job.Type === "off-campus"),
+    offCampus: filteredJobs
+      .filter((job) => job.Type === "off-campus")
+      .sort((a, b) => getMaxSalary(b.salary) - getMaxSalary(a.salary)),
   };
 
   const renderJobs = (jobsList) =>
@@ -291,6 +306,7 @@ const Applications = () => {
                 filterLocation={filterLocation}
                 setFilterLocation={setFilterLocation}
                 availableSources={availableSources}
+                availableLocations={availableLocations}
               />
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
