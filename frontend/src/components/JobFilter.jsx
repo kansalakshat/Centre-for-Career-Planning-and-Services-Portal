@@ -7,7 +7,8 @@ const JobFilter = ({
   setFilterSource, 
   filterLocation, 
   setFilterLocation,
-  availableSources
+  availableSources,
+  availableLocations = []
 }) => {
   return (
     <div className="w-full flex flex-col md:flex-row gap-4 mt-6">
@@ -59,13 +60,21 @@ const JobFilter = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
-        <input
-          type="text"
-          placeholder="Filter location..."
-          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#13665b] focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 transition-all"
+        <select
           value={filterLocation}
           onChange={(e) => setFilterLocation(e.target.value)}
-        />
+          className="w-full pl-11 pr-10 py-3 appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#13665b] text-gray-900 dark:text-white transition-all cursor-pointer"
+        >
+          <option value="">All Locations</option>
+          {availableLocations.map((loc, idx) => (
+            <option key={idx} value={loc}>{loc}</option>
+          ))}
+        </select>
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+          </svg>
+        </div>
       </div>
     </div>
   );
