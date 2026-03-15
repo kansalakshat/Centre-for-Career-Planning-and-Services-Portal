@@ -107,7 +107,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                                         href={job.originalLink}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
+                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
                                     >
                                         <svg
                                             className="w-4 h-4 mr-2 group-hover/btn:translate-x-1 transition-transform duration-200"
