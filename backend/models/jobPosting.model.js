@@ -64,6 +64,9 @@ const jobPostingSchema = new mongoose.Schema({
     },
     location: {
         type: String,
+    },
+    salary: {
+        type: String,
     }
 });
 

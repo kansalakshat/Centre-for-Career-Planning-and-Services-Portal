@@ -37,7 +37,8 @@ export const fetchJoobleJobs = async (page = 1) => {
                 externalId: String(job.id),
                 originalLink: job.link,
                 isScraped: true,
-                location: job.location
+                location: job.location,
+                salary: job.salary || "Not Disclosed"
             }));
             
             return mappedJobs;

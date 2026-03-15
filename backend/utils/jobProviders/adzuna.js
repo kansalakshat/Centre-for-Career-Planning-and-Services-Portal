@@ -42,7 +42,12 @@ export const fetchAdzunaJobs = async (country = 'in', page = 1) => {
                     externalId: String(job.id),
                     originalLink: job.redirect_url,
                     isScraped: true,
-                    location: job.location.display_name
+                    location: job.location.display_name,
+                    salary: job.salary_min && job.salary_max 
+                        ? (job.salary_min === job.salary_max 
+                            ? `${(job.salary_min / 100000).toFixed(1)} LPA` 
+                            : `${(job.salary_min / 100000).toFixed(1)}-${(job.salary_max / 100000).toFixed(1)} LPA`)
+                        : (job.salary_min ? `${(job.salary_min / 100000).toFixed(1)} LPA` : "Not Disclosed")
                 }));
                 allJobs = [...allJobs, ...mappedJobs];
             }
