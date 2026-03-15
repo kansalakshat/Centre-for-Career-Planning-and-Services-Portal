@@ -7,6 +7,7 @@ import ApplyModal from "../../components/ApplyModel";
 import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
 
 import JobCard from "../../components/JobCard";
+import JobFilter from "../../components/JobFilter";
 
 import { useAuthContext } from "../../context/AuthContext";
 import { getStudentProfile } from "../../api/profile/useStudentProfile";
@@ -27,6 +28,8 @@ const Applications = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [search, setSearch] = useState("");
+  const [filterSource, setFilterSource] = useState("All");
+  const [filterLocation, setFilterLocation] = useState("");
 
   const [activeTab, setActiveTab] = useState("jobs"); // <-- NEW STATE for tab
 
@@ -120,9 +123,24 @@ const Applications = () => {
     }
   };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.jobTitle.toLowerCase().includes(search.toLowerCase())
-  );
+  const availableSources = Array.from(new Set(jobs.map(j => j.source || 'Internal'))).filter(Boolean);
+
+  const filteredJobs = jobs.filter((job) => {
+    // 1. Search by Title or Company
+    const searchMatch = 
+      (job.jobTitle && job.jobTitle.toLowerCase().includes(search.toLowerCase())) ||
+      (job.Company && job.Company.toLowerCase().includes(search.toLowerCase()));
+      
+    // 2. Filter by Source
+    const jobSource = job.source || 'Internal';
+    const sourceMatch = filterSource === "All" || jobSource === filterSource;
+    
+    // 3. Filter by Location
+    const jobLoc = job.location || (job.JobLocation && job.JobLocation.length > 0 ? job.JobLocation[0] : '');
+    const locationMatch = !filterLocation || jobLoc.toLowerCase().includes(filterLocation.toLowerCase());
+
+    return searchMatch && sourceMatch && locationMatch;
+  });
 
   const grouped = {
     onCampus: filteredJobs.filter((job) => job.Type === "on-campus"),
@@ -262,46 +280,18 @@ const Applications = () => {
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 text-lg">Discover your next career adventure</p>
                 </div>
-                <div className="relative w-full lg:w-80">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search job titles..."
-                    className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#13665b] focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 transition-all duration-200"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                    >
-                      <svg
-                        className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
               </div>
+
+              {/* Job Filters */}
+              <JobFilter 
+                search={search}
+                setSearch={setSearch}
+                filterSource={filterSource}
+                setFilterSource={setFilterSource}
+                filterLocation={filterLocation}
+                setFilterLocation={setFilterLocation}
+                availableSources={availableSources}
+              />
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
