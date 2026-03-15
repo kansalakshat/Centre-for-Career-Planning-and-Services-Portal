@@ -23,9 +23,19 @@ export const fetchJoobleJobs = async (page = 1) => {
         });
 
         if (response.data && response.data.jobs) {
+            const cleanHTML = (str) => {
+                if (!str) return 'No description provided.';
+                return str
+                    .replace(/<[^>]*>?/gm, '') // Remove HTML tags
+                    .replace(/&nbsp;/g, ' ')   // Replace non-breaking spaces
+                    .replace(/&amp;/g, '&')    // Replace ampersands
+                    .replace(/&[a-z]+;/g, '')  // Remove other HTML entities
+                    .trim();
+            };
+
             const mappedJobs = response.data.jobs.map(job => ({
                 jobTitle: job.title,
-                jobDescription: job.snippet || 'No description provided.',
+                jobDescription: cleanHTML(job.snippet),
                 Company: job.company || 'Unknown Company',
                 requiredSkills: [],
                 Type: 'off-campus',

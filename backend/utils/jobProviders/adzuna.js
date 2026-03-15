@@ -28,9 +28,20 @@ export const fetchAdzunaJobs = async (country = 'in', page = 1) => {
             });
 
             if (response.data && response.data.results) {
+                const cleanHTML = (str) => {
+                    if (!str) return 'No description provided.';
+                    return str
+                        .replace(/<[^>]*>?/gm, '') // Remove HTML tags
+                        .replace(/&nbsp;/g, ' ')   // Replace non-breaking spaces
+                        .replace(/&amp;/g, '&')    // Replace ampersands
+                        .replace(/&[a-z]+;/g, '')  // Remove other HTML entities
+                        .replace(/\s+/g, ' ')      // Collapse multiple spaces
+                        .trim();
+                };
+
                 const mappedJobs = response.data.results.map(job => ({
                     jobTitle: job.title,
-                    jobDescription: job.description,
+                    jobDescription: cleanHTML(job.description),
                     Company: job.company.display_name,
                     requiredSkills: [],
                     Type: 'off-campus',
