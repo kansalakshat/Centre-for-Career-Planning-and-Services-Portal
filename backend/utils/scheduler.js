@@ -23,7 +23,19 @@ const scheduleJobs = () => {
                     // updates if necessary
                 }
             }
-            console.log('Job fetch completed.');
+            console.log('New job insertion loop completed.');
+
+            // Cleanup expired / old external jobs (older than 30 days)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const cleanupResult = await JobPosting.deleteMany({
+                isScraped: true,
+                createdAt: { $lt: thirtyDaysAgo }
+            });
+            console.log(`Cleaned up ${cleanupResult.deletedCount} old scraped jobs.`);
+
+            console.log('Scheduled job fetch cycle completed successfully.');
 
         } catch (error) {
             console.error('Error in scheduled job fetch:', error);
