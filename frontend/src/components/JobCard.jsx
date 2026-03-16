@@ -54,9 +54,10 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-[#0c4a42] dark:group-hover:text-emerald-300 transition-colors duration-200 relative z-10 line-clamp-2">
                 {job.jobTitle}
             </h2>
-            <p className="text-sm text-gray-500">
-            👥  Applicants : {job.totalApplicants}
-            </p>
+            <span className="badge badge-outline text-xs">
+            👥 {job.totalApplicants} Applicants
+            </span>
+            <br/>
             {job.eligibilityStatus && (
             <div className={`mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                 job.eligibilityStatus === "Eligible"
