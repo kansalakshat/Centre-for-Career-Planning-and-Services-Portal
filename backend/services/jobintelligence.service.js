@@ -94,6 +94,12 @@ export const getIntelligentFeed = async (user, queryParams) => {
         }
     });
 
+    pipeline.push({
+    $addFields: {
+        totalApplicants: { $size: "$jobApplications" }
+    }
+    });
+
     if (sortBy && sortBy !== "relevanceScore") {
         throw new Error("Invalid sort field");
     }
