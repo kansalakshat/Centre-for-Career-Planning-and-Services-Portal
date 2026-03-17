@@ -1,6 +1,8 @@
 import JobApplication from "../models/JobApplication.model.js";
 import JobPosting from "../models/jobPosting.model.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
+
 
 export const getStudentApplications = async (req, res) => {
   try {
@@ -190,4 +192,67 @@ export const getAppliedJobs = async (req, res) => {
   }
 };
 
+export const updateOnCampusApplicationStatus = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { status } = req.body;
+    const allowedStatuses = ["applied", "in-review", "rejected", "accepted"];
+
+    // Validating the applicationId format
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application ID"
+      });
+    }
+
+    // Validating the status presence
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required"
+      });
+    }
+
+    // Validating the allowed status values
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid application status"
+      });
+    }
+    const application = await JobApplication.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found"
+      });
+    }
+
+    const job = await JobPosting.findById(application.jobId);
+    if (!job || job.Type !== "on-campus") {
+      return res.status(400).json({
+        success: false,
+        message: "Only on-campus applications can be updated"
+      });
+    }
+
+    application.status = status;
+    await application.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Application status updated successfully",
+      application
+    });
+
+  } catch (err) {
+    console.error("Update on-campus application status error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update application status",
+      error: err.message
+    });
+  }
+};
 

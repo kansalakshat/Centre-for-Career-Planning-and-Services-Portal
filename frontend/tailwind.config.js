@@ -5,6 +5,7 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: ['selector', '[data-theme="business"]'],
   theme: {
     extend: {},
   },
@@ -12,6 +13,6 @@ module.exports = {
     daisyui,
   ],
   daisyui: {
-    themes: ["corporate"],
+    themes: ["corporate", "business"],
   }
 }
