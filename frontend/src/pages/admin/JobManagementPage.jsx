@@ -11,6 +11,7 @@ const JobManagementPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [totalJobsCount, setTotalJobsCount] = useState(0);
+    const [searchTerm, setSearchTerm] = useState("");
     const LIMIT = 15;
 
     const getAdminToken = useCallback(() => {
@@ -28,7 +29,7 @@ const JobManagementPage = () => {
         }
         return tokenFromTokenKey;
     }, []);
-    const loadJobs = useCallback(async (pageToLoad = 1) => {
+    const loadJobs = useCallback(async (pageToLoad = 1, currentSearch = "") => {
         const token = getAdminToken();
 
         if (!token) {
@@ -37,7 +38,7 @@ const JobManagementPage = () => {
         }
 
         try {
-            const data = await fetchJobs(token, pageToLoad, LIMIT);
+            const data = await fetchJobs(token, pageToLoad, LIMIT, currentSearch);
             const newJobs = data.jobs || [];
             
             if (data.totalJobs !== undefined) {
@@ -62,13 +63,22 @@ const JobManagementPage = () => {
     }, [getAdminToken]);
 
     useEffect(() => {
-        loadJobs(1);
-    }, [loadJobs]);
+        loadJobs(1, searchTerm);
+    }, [loadJobs]); // Initial load
+
+    // Debounce the search input so it doesn't slam the API every keystroke
+    useEffect(() => {
+        const delaySearch = setTimeout(() => {
+            setCurrentPage(1);
+            loadJobs(1, searchTerm);
+        }, 500);
+        return () => clearTimeout(delaySearch);
+    }, [searchTerm, loadJobs]);
 
     const handleLoadMore = () => {
         const nextPage = currentPage + 1;
         setCurrentPage(nextPage);
-        loadJobs(nextPage);
+        loadJobs(nextPage, searchTerm);
     };
 
     const handleEditClick = (job) => {
@@ -146,6 +156,17 @@ const JobManagementPage = () => {
                     </div>
 
                     <div className="p-6">
+                        {/* Search Bar */}
+                        <div className="mb-6">
+                            <input
+                                type="text"
+                                placeholder="Search by Job Title or Company..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#0c4a42] focus:border-transparent transition-all shadow-sm"
+                            />
+                        </div>
+
                         <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                             {jobs.length === 0 ? (
                                 <p className="p-4 text-center text-gray-500 dark:text-gray-400">No jobs currently posted.</p>

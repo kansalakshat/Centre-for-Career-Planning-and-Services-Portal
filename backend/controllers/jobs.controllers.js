@@ -134,10 +134,22 @@ export const jobList = async (req, res) => {
             sortBy,
             order,
             source,
-            isScraped
+            isScraped,
+            search
         } = req.query;
 
         const matchStage = {};
+
+        if (search) {
+            const escapedSearch = search.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
+            matchStage.$or = [
+                { Company: { $regex: escapedSearch, $options: "i" } },
+                { jobTitle: { $regex: escapedSearch, $options: "i" } }
+            ];
+        }
 
         // exact matches
         if (type) {
