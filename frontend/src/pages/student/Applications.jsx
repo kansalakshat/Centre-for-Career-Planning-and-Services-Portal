@@ -32,6 +32,7 @@ const Applications = () => {
   const [filterLocation, setFilterLocation] = useState("");
 
   const [activeTab, setActiveTab] = useState("jobs"); // <-- NEW STATE for tab
+  const [offCampusLimit, setOffCampusLimit] = useState(30); // Pagination for external jobs
 
   const { authUser } = useAuthContext();
   const [profile, setProfile] = useState(userData);
@@ -430,7 +431,21 @@ const Applications = () => {
                     </span>
                   </div>
                 </div>
-                {renderJobs(grouped.offCampus)}
+                {renderJobs(grouped.offCampus.slice(0, offCampusLimit))}
+                
+                {grouped.offCampus.length > offCampusLimit && (
+                  <div className="flex justify-center mt-10 pb-12">
+                    <button
+                      onClick={() => setOffCampusLimit(prev => prev + 30)}
+                      className="px-8 py-3 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm flex items-center space-x-2"
+                    >
+                      <span>Show More Off-Campus Jobs</span>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </section>
             </div>
           </>
