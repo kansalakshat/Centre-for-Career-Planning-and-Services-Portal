@@ -39,6 +39,16 @@ const userSchema = new mongoose.Schema({
     address: {
         type: String,
         default: ''
+    },
+    privacySettings: {
+        allowMessages: {
+            type: Boolean,
+            default: true
+        },
+        departmentOnly: {
+            type: Boolean,
+            default: false
+        }
     }
 })
 

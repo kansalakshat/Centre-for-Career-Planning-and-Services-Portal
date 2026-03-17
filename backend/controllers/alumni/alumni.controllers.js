@@ -25,6 +25,33 @@ export const searchAlumniByJobId = async (req, res) => {
   }
 };
 
+export const updatePrivacySettings = async (req, res) => {
+  try {
+    const alumniId = req.user.id;
+
+    const { allowMessages, departmentOnly } = req.body;
+
+    const alumni = await User.findByIdAndUpdate(
+      alumniId,
+      {
+        privacySettings: {
+          allowMessages,
+          departmentOnly
+        }
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      privacySettings: alumni.privacySettings
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update privacy settings" });
+  }
+};
+
 // Search by Job Role
 export const searchAlumniByJobRole = async (req, res) => {
   const { jobRole } = req.query;

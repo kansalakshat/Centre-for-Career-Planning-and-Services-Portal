@@ -66,6 +66,17 @@ const Sidebar = () => {
           </NavLink>
         </>
       )}
+
+      {authUser.role === "alumni" && (
+        <>
+          <NavLink to="/alumni/requests" className={navLinkClass}>
+            Incoming Requests
+          </NavLink>
+          <NavLink to="/alumni/connections" className={navLinkClass}>
+            Connections
+          </NavLink>
+        </>
+      )}
     </>
   );
 

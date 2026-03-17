@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-
+import api from "../../api/api";
+import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import useGetAlumni from "../../api/alumni/useGetAlumni";
 import useGetAllAlumni from "../../api/alumni/useGetAllAlumni";
@@ -16,6 +16,7 @@ const Alumni = () => {
   const [alumniList, setAlumniList] = useState([]);
   const [selectedAlumni, setSelectedAlumni] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [requests, setRequests] = useState([]);
 
   const { loading: loadingAll, alumni } = useGetAllAlumni();
   const { loading: loadingSearch, getAlumni } = useGetAlumni();
@@ -24,6 +25,25 @@ const Alumni = () => {
   useEffect(() => {
     setAlumniList(alumni);
   }, [alumni]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await api.get("/api/connect/my-requests");
+        setRequests(res.data);
+      } catch (error) {
+        console.error("Error fetching requests", error);
+      }
+    };
+
+  if (authUser?.role === "student") {
+    fetchRequests();
+
+    const interval = setInterval(fetchRequests, 10000);
+
+    return () => clearInterval(interval);
+  }
+}, [authUser]);
 
   const handleSearch = async () => {
     const data = await getAlumni(searchType, search);
@@ -51,7 +71,7 @@ const Alumni = () => {
         await deleteAlumni(id, token);
         setAlumniList(alumniList.filter((a) => a._id !== id));
       } catch (error) {
-        toast.error("Failed to delete alumni");
+        toast.error("Failed to delete alumni", error);
       }
     }
   }
@@ -155,8 +175,10 @@ const Alumni = () => {
                   alum={alum} 
                   index={index} 
                   authUser={authUser}
-                  onEditAlumni={handleEditAlumni(alum._id)}
-                  onDeleteAlumni={handleDeleteAlumni(alum._id)}
+                  requests={requests}
+                  setRequests={setRequests}
+                  onEditAlumni={()=>handleEditAlumni(alum._id)}
+                  onDeleteAlumni={()=>handleDeleteAlumni(alum._id)}
                   />
               ))}
             </div>
@@ -173,6 +195,7 @@ const Alumni = () => {
           onUpdateAlumni={onUpdateExistingAlumni}
           onDeleteAlumni={onDeleteExistingAlumni}
           onClose={closeAddEditModal}
+          setRequests={setRequests}
         />
       )}
     </div>
