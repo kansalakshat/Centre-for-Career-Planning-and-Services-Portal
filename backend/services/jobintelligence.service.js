@@ -1,8 +1,12 @@
 import JobPosting from "../models/jobPosting.model.js";
 import Alumni from "../models/Alumni.model.js";
-
+import Student from "../models/student.model.js";
 
 export const getIntelligentFeed = async (user, queryParams) => {
+
+    const studentProfile = await Student.findOne({ ReferenceObject: user._id });
+    const userSkills = studentProfile?.skills || [];
+
     const {
         type,
         company,
@@ -180,8 +184,9 @@ export const getIntelligentFeed = async (user, queryParams) => {
 
         let skillMatchScore = 0;
 
-        if (user?.skills && job.requiredSkills?.length) {
-            const userSkillsLower = user.skills.map(s => s.toLowerCase());
+        if (userSkills.length && job.requiredSkills?.length) {
+            const userSkillsLower = userSkills.map(s => s.toLowerCase());
+
             const matches = job.requiredSkills.filter(skill =>
                 userSkillsLower.includes(skill.toLowerCase())
             );
