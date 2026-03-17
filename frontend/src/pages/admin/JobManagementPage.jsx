@@ -10,6 +10,7 @@ const JobManagementPage = () => {
     const [jobToEdit, setJobToEdit] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [totalJobsCount, setTotalJobsCount] = useState(0);
     const LIMIT = 15;
 
     const getAdminToken = useCallback(() => {
@@ -39,6 +40,10 @@ const JobManagementPage = () => {
             const data = await fetchJobs(token, pageToLoad, LIMIT);
             const newJobs = data.jobs || [];
             
+            if (data.totalJobs !== undefined) {
+                setTotalJobsCount(data.totalJobs);
+            }
+
             if (pageToLoad === 1) {
                 setJobs(newJobs);
             } else {
@@ -130,13 +135,13 @@ const JobManagementPage = () => {
             )}
 
             <main className="flex-1 p-6 pt-20 md:pt-8 w-full">
-                <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
 
                     {/* Header */}
                     <div className="bg-[#0c4a42] p-6 flex justify-between items-center">
                         <div>
                             <h1 className="text-2xl font-bold text-white">Job Management Portal</h1>
-                            <p className="text-green-300 mt-1">Review and manage all active job postings</p>
+                            <p className="text-green-300 mt-1">Review and manage all active job postings ({totalJobsCount} total jobs)</p>
                         </div>
                     </div>
 
