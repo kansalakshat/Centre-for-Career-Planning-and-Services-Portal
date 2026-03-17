@@ -98,7 +98,7 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] overflow-y-auto">
                 
                 {/* Header */}
                 <div className="bg-[#0c4a42] p-6 sticky top-0 z-10">
@@ -115,32 +115,32 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Job Title */}
                         <div>
-                            <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                            <input id="jobTitle" name="jobTitle" type="text" required value={form.jobTitle} onChange={handleChange} placeholder="e.g. Frontend Engineer" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Title</label>
+                            <input id="jobTitle" name="jobTitle" type="text" required value={form.jobTitle} onChange={handleChange} placeholder="e.g. Frontend Engineer" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                         {/* Company Name */}
                         <div>
-                            <label htmlFor="Company" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                            <input id="Company" name="Company" type="text" required value={form.Company} onChange={handleChange} placeholder="e.g. Acme Corp" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="Company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
+                            <input id="Company" name="Company" type="text" required value={form.Company} onChange={handleChange} placeholder="e.g. Acme Corp" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                     </div>
 
                     {/* Job Description */}
                     <div>
-                        <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 mb-1">Job Description</label>
-                        <textarea id="jobDescription" name="jobDescription" required rows={5} value={form.jobDescription} onChange={handleChange} placeholder="Describe role, responsibilities, perks…" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                        <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Description</label>
+                        <textarea id="jobDescription" name="jobDescription" required rows={5} value={form.jobDescription} onChange={handleChange} placeholder="Describe role, responsibilities, perks…" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Required Skills */}
                         <div>
-                            <label htmlFor="requiredSkills" className="block text-sm font-medium text-gray-700 mb-1">Required Skills</label>
-                            <input id="requiredSkills" name="requiredSkills" type="text" value={form.requiredSkills} onChange={handleChange} placeholder="e.g. React, Node.js" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="requiredSkills" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Required Skills</label>
+                            <input id="requiredSkills" name="requiredSkills" type="text" value={form.requiredSkills} onChange={handleChange} placeholder="e.g. React, Node.js" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                         {/* Job Type */}
                         <div>
-                            <label htmlFor="Type" className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
-                            <select id="Type" name="Type" required value={form.Type} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition">
+                            <label htmlFor="Type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Type</label>
+                            <select id="Type" name="Type" required value={form.Type} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition">
                                 <option value="on-campus">On-Campus</option>
                                 <option value="off-campus">Off-Campus</option>
                             </select>
@@ -150,39 +150,39 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Eligible Batch */}
                         <div>
-                            <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">Eligible Batch</label>
-                            <input id="batch" name="batch" type="number" required value={form.batch} onChange={handleChange} placeholder="e.g. 2025" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="batch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Eligible Batch</label>
+                            <input id="batch" name="batch" type="number" required value={form.batch} onChange={handleChange} placeholder="e.g. 2025" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                         {/* Relevance Score */}
                         <div>
-                            <label htmlFor="relevanceScore" className="block text-sm font-medium text-gray-700 mb-1">Relevance Score</label>
-                            <input id="relevanceScore" name="relevanceScore" type="number" step="1" value={form.relevanceScore} onChange={handleChange} placeholder="Default: 0" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="relevanceScore" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relevance Score</label>
+                            <input id="relevanceScore" name="relevanceScore" type="number" step="1" value={form.relevanceScore} onChange={handleChange} placeholder="Default: 0" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Application Deadline */}
                         <div>
-                            <label htmlFor="Deadline" className="block text-sm font-medium text-gray-700 mb-1">Application Deadline</label>
-                            <input id="Deadline" name="Deadline" type="date" value={form.Deadline} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="Deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Application Deadline</label>
+                            <input id="Deadline" name="Deadline" type="date" value={form.Deadline} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                         {/* Post Expiry Date */}
                         <div>
-                            <label htmlFor="Expiry" className="block text-sm font-medium text-gray-700 mb-1">Post Expiry Date</label>
-                            <input id="Expiry" name="Expiry" type="date" value={form.Expiry} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                            <label htmlFor="Expiry" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Post Expiry Date</label>
+                            <input id="Expiry" name="Expiry" type="date" value={form.Expiry} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                         </div>
                     </div>
 
                     {/* Application Link */}
                     <div>
-                        <label htmlFor="ApplicationLink" className="block text-sm font-medium text-gray-700 mb-1">Application Link (optional)</label>
-                        <input id="ApplicationLink" name="ApplicationLink" type="url" value={form.ApplicationLink} onChange={handleChange} placeholder="https://apply.here" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                        <label htmlFor="ApplicationLink" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Application Link (optional)</label>
+                        <input id="ApplicationLink" name="ApplicationLink" type="url" value={form.ApplicationLink} onChange={handleChange} placeholder="https://apply.here" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                     </div>
 
                     {/* Author */}
                     <div>
-                        <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">Author (optional)</label>
-                        <input id="author" name="author" type="text" value={form.author} onChange={handleChange} placeholder="Your name" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
+                        <label htmlFor="author" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author (optional)</label>
+                        <input id="author" name="author" type="text" value={form.author} onChange={handleChange} placeholder="Your name" className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition"/>
                     </div>
 
                     <div className="flex justify-end space-x-4 pt-4">
@@ -190,7 +190,7 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
                             type="button"
                             onClick={onClose} 
                             disabled={submitting}
-                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition"
+                            className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition"
                         >
                             Cancel
                         </button>
