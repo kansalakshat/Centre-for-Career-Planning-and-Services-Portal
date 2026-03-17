@@ -238,6 +238,14 @@ export const jobList = async (req, res) => {
                 as: "jobApplications"
             }
         });
+
+        // Compute application count for sorting
+        pipeline.push({
+            $addFields: {
+                applicationCount: { $size: "$jobApplications" }
+            }
+        });
+
         //validation of sort if given
         if (sortBy && sortBy !== "relevanceScore") {
             return res.status(400).json({ message: "Invalid sort field" });
@@ -255,7 +263,7 @@ export const jobList = async (req, res) => {
             });
         } else {
             pipeline.push({
-                $sort: { _id: 1 }
+                $sort: { applicationCount: -1, _id: -1 }
             });
         }
 
