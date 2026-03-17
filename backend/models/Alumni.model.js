@@ -6,10 +6,15 @@ const alumniSchema = new mongoose.Schema({
     required: true,
   },
   company: {
-  type: String,
-  required: true,
-  lowercase: true,
-  trim: true
+    type: String,
+    required: true,
+    lowercase: true,
+    trim: true
+  },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Company",
+    required: false
   },
   linkedin: {
     type: String,
@@ -39,5 +44,6 @@ const alumniSchema = new mongoose.Schema({
 });
 
 const Alumni = mongoose.model("Alumni", alumniSchema);
+alumniSchema.index({ company: 1 });
 export default Alumni;
     

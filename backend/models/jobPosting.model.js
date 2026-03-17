@@ -15,6 +15,11 @@ const jobPostingSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
     },
+    companyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Company",
+        required: false
+    },
     requiredSkills: [{
         type: String,
     }],

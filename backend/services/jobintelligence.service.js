@@ -131,18 +131,27 @@ export const getIntelligentFeed = async (user, queryParams) => {
     const jobPostings = await JobPosting.aggregate(pipeline);
 
     // ===== Alumni Aggregation Layer =====
+    const companyIds = jobPostings
+        .map(j => j.companyId)
+        .filter(id => id); // remove null/undefined
+
     const companies = [
         ...new Set(jobPostings.map(j => j.Company?.toLowerCase().trim()))
     ];
 
     const alumniData = await Alumni.find({
-        company: { $in: companies }
-    }).select("name batch jobs company");
+        $or: [
+            { companyId: { $in: companyIds } },   // ✅ primary
+            { company: { $in: companies } }       // ✅ fallback
+        ]
+    }).select("name batch jobs company companyId");
 
     const alumniGrouped = {};
 
     alumniData.forEach(alum => {
-        const companyKey = alum.company?.toLowerCase().trim();
+        const companyKey = alum.companyId
+            ? alum.companyId.toString()
+            : alum.company?.toLowerCase().trim();
 
         if (!alumniGrouped[companyKey]) {
             alumniGrouped[companyKey] = [];
@@ -158,7 +167,10 @@ export const getIntelligentFeed = async (user, queryParams) => {
     // Eligibility Layer (Basic Version)
     const enrichedJobs = jobPostings.map(job => {
 
-        const companyKey = job.Company?.toLowerCase().trim();
+        const companyKey = job.companyId
+            ? job.companyId.toString()
+            : job.Company?.toLowerCase().trim();
+
         const companyAlumni = alumniGrouped[companyKey] || [];
 
         const alumniCount = companyAlumni.length;

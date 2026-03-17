@@ -1,5 +1,5 @@
 import { getIntelligentFeed } from "../services/jobintelligence.service.js";
-
+import Company from "../models/company.model.js";
 
 
 import JobPosting from '../models/jobPosting.model.js';
@@ -34,7 +34,7 @@ export const jobCreate = async (req, res) => {
         const {
             jobTitle,
             jobDescription,
-            Company,
+            Company: companyName,
             requiredSkills,
             Type,
             batch,
@@ -45,10 +45,17 @@ export const jobCreate = async (req, res) => {
             relevanceScore
         } = req.body;
         // Create a new job posting instance
+        const normalizedCompany = companyName.trim().toLowerCase();
+        let companyDoc = await Company.findOne({ name: normalizedCompany });
+
+        if (!companyDoc) {
+            companyDoc = await Company.create({ name: normalizedCompany });
+        }
         const newJobPosting = new JobPosting({
             jobTitle,
             jobDescription,
-            Company,
+            Company: normalizedCompany,
+            companyId: companyDoc._id,
             requiredSkills,
             Type,
             batch,
