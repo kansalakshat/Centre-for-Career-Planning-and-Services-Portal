@@ -7,6 +7,7 @@ import ApplyModal from "../../components/ApplyModel";
 import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
 
 import JobCard from "../../components/JobCard";
+import JobDetailModal from "../../components/JobDetailModal";
 import JobFilter from "../../components/JobFilter";
 
 import { useAuthContext } from "../../context/AuthContext";
@@ -34,6 +35,7 @@ const Applications = () => {
   const [activeTab, setActiveTab] = useState("jobs"); // <-- NEW STATE for tab
   const [offCampusLimit, setOffCampusLimit] = useState(30); // Pagination for external jobs
   const [externalJobToConfirm, setExternalJobToConfirm] = useState(null); // Tracking external application confirmation
+  const [detailJob, setDetailJob] = useState(null); // Job detail modal
 
   const { authUser } = useAuthContext();
   const [profile, setProfile] = useState(userData);
@@ -231,6 +233,7 @@ const Applications = () => {
             handleSaveJob={handleSaveJob}
             onExternalApply={handleExternalApplyClick}
             onWithdraw={handleWithdraw}
+            onCardClick={setDetailJob}
           />
         ))}
       </div>
@@ -316,6 +319,7 @@ const Applications = () => {
                       savedJobs={savedJobs}
                       isAppliedJob={true}
                       onWithdraw={handleWithdraw}
+                      onCardClick={setDetailJob}
                     />
                   ))}
                 </div>
@@ -541,6 +545,10 @@ const Applications = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {detailJob && (
+        <JobDetailModal job={detailJob} onClose={() => setDetailJob(null)} />
       )}
     </div>
   );

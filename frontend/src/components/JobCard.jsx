@@ -1,6 +1,6 @@
 import React from 'react';
 
-const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, onWithdraw, isAppliedJob, savedJobs = [] }) => {
+const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, onWithdraw, onCardClick, isAppliedJob, savedJobs = [] }) => {
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
@@ -37,7 +37,8 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
     return (
         <div
             key={job._id}
-            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden cursor-pointer"
+            onClick={() => onCardClick && onCardClick(job)}
         >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-transparent to-indigo-50/0 group-hover:from-blue-50/30 group-hover:to-indigo-50/30 transition-all duration-300 rounded-2xl"></div>
 
@@ -91,7 +92,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
             </p>
 
             {isAppliedJob && (
-                <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
+                <div onClick={(e) => e.stopPropagation()} className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
                     <div className="flex items-center gap-2">
                         <span
                             className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
@@ -115,7 +116,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
             )}
 
             {!isAppliedJob && (
-                <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
+                <div onClick={(e) => e.stopPropagation()} className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
                     <div className="flex flex-col">
                         {applied ? (
                             <div className="flex items-center gap-2">
