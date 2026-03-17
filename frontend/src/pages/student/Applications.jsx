@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast";
 import { useEffect, useState } from "react";
 // Ensure fetchAppliedJobs is imported from your API service file
-import { fetchJobs, fetchMyApplications, fetchAppliedJobs } from "../../api/useApply";
+import { fetchJobs, fetchMyApplications, fetchAppliedJobs, applyToJob, withdrawApplication } from "../../api/useApply";
 import Sidebar from "../../components/Sidebar";
 import ApplyModal from "../../components/ApplyModel";
 import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
@@ -33,6 +33,7 @@ const Applications = () => {
 
   const [activeTab, setActiveTab] = useState("jobs"); // <-- NEW STATE for tab
   const [offCampusLimit, setOffCampusLimit] = useState(30); // Pagination for external jobs
+  const [externalJobToConfirm, setExternalJobToConfirm] = useState(null); // Tracking external application confirmation
 
   const { authUser } = useAuthContext();
   const [profile, setProfile] = useState(userData);
@@ -123,6 +124,39 @@ const Applications = () => {
       toast.error("Failed to update job save status.");
     }
   };
+  
+  const handleExternalApplyClick = (job) => {
+    setExternalJobToConfirm(job);
+  };
+
+  const handleExternalAppliedConfirm = async (confirmed) => {
+    if (confirmed && externalJobToConfirm) {
+      try {
+        await applyToJob({
+          jobId: externalJobToConfirm._id,
+          resume: profile.resumeUrl || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+        });
+        toast.success(`Tracked application for ${externalJobToConfirm.jobTitle}`);
+        handleApplied(); // Refresh lists
+      } catch (err) {
+        toast.error(err.message || "Failed to track external application");
+      }
+    }
+    setExternalJobToConfirm(null);
+  };
+
+  const handleWithdraw = async (jobId) => {
+    if (!window.confirm("Are you sure you want to withdraw this application?")) return;
+    try {
+      await withdrawApplication(jobId);
+      toast.success("Application withdrawn successfully");
+      handleApplied(); // Refresh lists
+    } catch (err) {
+      toast.error(err.message || "Failed to withdraw application");
+    }
+  };
 
   const availableSources = Array.from(new Set(jobs.map(j => j.source || 'Internal'))).filter(Boolean);
   const availableLocations = Array.from(new Set(jobs.map(j => 
@@ -195,6 +229,8 @@ const Applications = () => {
             savedJobs={savedJobs}
             openApplyModal={openApplyModal}
             handleSaveJob={handleSaveJob}
+            onExternalApply={handleExternalApplyClick}
+            onWithdraw={handleWithdraw}
           />
         ))}
       </div>
@@ -279,6 +315,7 @@ const Applications = () => {
                       myApps={appliedJobsList} // Pass the dedicated list for status check
                       savedJobs={savedJobs}
                       isAppliedJob={true}
+                      onWithdraw={handleWithdraw}
                     />
                   ))}
                 </div>
@@ -460,6 +497,50 @@ const Applications = () => {
           onClose={() => setIsModalOpen(false)}
           onApplied={handleApplied}
         />
+      )}
+
+      {externalJobToConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">Application Feedback</h3>
+              <p className="text-blue-100 text-sm">Help us track your progress</p>
+            </div>
+            
+            <div className="p-8 text-center">
+              <p className="text-gray-700 dark:text-gray-200 text-lg font-medium mb-6">
+                Did you complete your application for <span className="text-blue-600 dark:text-blue-400 font-bold">{externalJobToConfirm.jobTitle}</span> at {externalJobToConfirm.Company}?
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleExternalAppliedConfirm(false)}
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+                >
+                  No, not yet
+                </button>
+                <button
+                  onClick={() => handleExternalAppliedConfirm(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-none hover:shadow-blue-300 hover:scale-[1.02] transition-all active:scale-95"
+                >
+                  Yes, I applied!
+                </button>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setExternalJobToConfirm(null)}
+              className="w-full py-4 text-gray-400 dark:text-gray-500 text-xs hover:text-gray-600 dark:hover:text-gray-400 transition-colors border-t border-gray-100 dark:border-gray-700"
+            >
+              I'll answer this later
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

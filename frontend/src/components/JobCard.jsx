@@ -1,6 +1,6 @@
 import React from 'react';
 
-const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, savedJobs = [] }) => {
+const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, onWithdraw, isAppliedJob, savedJobs = [] }) => {
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
@@ -90,23 +90,61 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                 {job.jobDescription}
             </p>
 
+            {isAppliedJob && (
+                <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
+                    <div className="flex items-center gap-2">
+                        <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
+                        >
+                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
+                            {status || 'Pending'}
+                        </span>
+                        {onWithdraw && (
+                            <button
+                                onClick={() => onWithdraw(job._id)}
+                                className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
+                            >
+                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Withdraw
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {!isAppliedJob && (
                 <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
                     <div className="flex flex-col">
                         {applied ? (
-                            <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
-                            >
-                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
-                                {status || 'Pending'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
+                                    {status || 'Pending'}
+                                </span>
+                                {onWithdraw && (
+                                    <button
+                                        onClick={() => onWithdraw(job._id)}
+                                        className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
+                                    >
+                                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Withdraw
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             <div className="flex gap-2">
                                 {job.isScraped ? (
-                                    <a
-                                        href={job.originalLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <button
+                                        onClick={() => {
+                                            window.open(job.originalLink, '_blank', 'noopener,noreferrer');
+                                            onExternalApply(job);
+                                        }}
                                         className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
                                     >
                                         <svg
@@ -118,7 +156,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
                                         Apply on {job.source || 'External'}
-                                    </a>
+                                    </button>
                                 ) : (
                                     <button
                                         onClick={() => openApplyModal(job)}

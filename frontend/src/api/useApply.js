@@ -124,3 +124,18 @@ export const fetchSavedApplications = () =>
   axiosInstance
     .get("/api/applications/saved")
     .then((res) => res.data.savedApplications);
+
+export const withdrawApplication = async (jobId) => {
+  const token = localStorage.getItem("ccps-token");
+  try {
+    const res = await axiosInstance.delete(`/api/applications/cancel/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Withdraw Application API error:", err.response?.data || err.message);
+    throw new Error(err.response?.data?.message || 'Failed to withdraw application');
+  }
+};
