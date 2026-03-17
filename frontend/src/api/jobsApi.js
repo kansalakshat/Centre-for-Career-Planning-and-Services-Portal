@@ -49,9 +49,9 @@ export const updateJobPosting = async (jobId, jobData, token) => {
  * @param {string} token - The authorization token.
  * @returns {Promise<object>} The response data from the server.
  */
-export const fetchJobs = async (token) => {
+export const fetchJobs = async (token, page = 1, limit = 15) => {
     // 🔑 Fix: Use the correct, full endpoint: /api/jobs
-    const response = await fetch(JOBS_ENDPOINT, { 
+    const response = await fetch(`${JOBS_ENDPOINT}?page=${page}&limit=${limit}`, { 
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

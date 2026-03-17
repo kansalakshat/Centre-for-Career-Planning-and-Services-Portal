@@ -8,6 +8,9 @@ const JobManagementPage = () => {
     const [jobs, setJobs] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [jobToEdit, setJobToEdit] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const LIMIT = 15;
 
     const getAdminToken = useCallback(() => {
         const userString = localStorage.getItem('ccps-user');
@@ -24,7 +27,7 @@ const JobManagementPage = () => {
         }
         return tokenFromTokenKey;
     }, []);
-    const loadJobs = useCallback(async () => {
+    const loadJobs = useCallback(async (pageToLoad = 1) => {
         const token = getAdminToken();
 
         if (!token) {
@@ -33,8 +36,20 @@ const JobManagementPage = () => {
         }
 
         try {
-            const data = await fetchJobs(token);
-            setJobs(data.jobs || []);
+            const data = await fetchJobs(token, pageToLoad, LIMIT);
+            const newJobs = data.jobs || [];
+            
+            if (pageToLoad === 1) {
+                setJobs(newJobs);
+            } else {
+                setJobs(prevJobs => [...prevJobs, ...newJobs]);
+            }
+            
+            if (newJobs.length < LIMIT) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
         } catch (err) {
             console.error('Failed to load jobs:', err.message);
             toast.error('Failed to load jobs: ' + err.message);
@@ -42,8 +57,14 @@ const JobManagementPage = () => {
     }, [getAdminToken]);
 
     useEffect(() => {
-        loadJobs();
+        loadJobs(1);
     }, [loadJobs]);
+
+    const handleLoadMore = () => {
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        loadJobs(nextPage);
+    };
 
     const handleEditClick = (job) => {
         setJobToEdit(job);
@@ -160,6 +181,17 @@ const JobManagementPage = () => {
                                 </table>
                             )}
                         </div>
+                        
+                        {hasMore && jobs.length > 0 && (
+                            <div className="mt-6 flex justify-center">
+                                <button
+                                    onClick={handleLoadMore}
+                                    className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg shadow-sm transition duration-150"
+                                >
+                                    Show More
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
