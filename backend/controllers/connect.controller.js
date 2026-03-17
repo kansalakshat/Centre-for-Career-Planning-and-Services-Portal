@@ -1,7 +1,7 @@
 import ConnectionRequest from "../models/ConnectionRequest.model.js";
 import User from "../models/user.model.js";
 import { CONNECTION_REQUEST_TEMPLATE } from "../assets/emailTemplates.js";
-import { sendEmail } from "../utils/emails.js"; 
+import { sendEmail } from "../utils/emails.js";
 import Alumni from "../models/Alumni.model.js";
 
 export const sendRequest = async (req, res) => {
@@ -9,7 +9,7 @@ export const sendRequest = async (req, res) => {
     const { alumniId, purpose, message } = req.body;
 
     const alumni = await Alumni.findById(alumniId);
-    
+
     if (!alumni) {
       return res.status(404).json({
         message: "Alumni not found"
@@ -74,17 +74,32 @@ export const sendRequest = async (req, res) => {
     const student = await User.findById(req.user.id);
 
 
-    if (alumni?.Email) {
-      const htmlContent = CONNECTION_REQUEST_TEMPLATE
-        .replace("{studentName}", student.name)
-        .replace("{purpose}", purpose)
-        .replace("{message}", message);
+    try {
+      if (alumni?.Email) {
+        const escapeHTML = (str) =>
+          (str || "").replace(/[&<>'"]/g,
+            tag => ({
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              "'": '&#39;',
+              '"': '&quot;'
+            }[tag] || tag)
+          );
 
-      await sendEmail({
-        to: alumni.Email,
-        subject: "New Connection Request - CCPS Portal",
-        html: htmlContent,
-      });
+        const htmlContent = CONNECTION_REQUEST_TEMPLATE
+          .replace("{studentName}", escapeHTML(student.name))
+          .replace("{purpose}", escapeHTML(purpose))
+          .replace("{message}", escapeHTML(message));
+
+        await sendEmail({
+          to: alumni.Email,
+          subject: "New Connection Request - CCPS Portal",
+          html: htmlContent,
+        });
+      }
+    } catch (emailError) {
+      console.error("Email failed:", emailError);
     }
 
     res.status(201).json(request);
@@ -97,8 +112,15 @@ export const sendRequest = async (req, res) => {
 
 export const getPendingRequests = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+    const alumniProfile = await Alumni.findOne({ Email: user.email });
+
+    if (!alumniProfile) {
+      return res.status(404).json({ message: "Alumni profile not found" });
+    }
+
     const requests = await ConnectionRequest.find({
-      alumniId: req.user.id,
+      alumniId: alumniProfile._id,
       status: "pending",
     }).populate("studentId", "name email");
 

@@ -63,9 +63,9 @@ function App() {
         <Route path='/referrals' element={<Referrals />} />
         <Route path='/resumebuilder' element={<ResumeBuilder />} />
         <Route path='/alumni' element={<Alumni />} />
-        <Route path="/chat/:receiverId" element={<ChatPage />} />
-        <Route path="/alumni/requests" element={<IncomingRequests />} />
-        <Route path="/alumni/connections" element={<Connections />} />
+        <Route path="/chat/:receiverId" element={authUser ? <ChatPage /> : <Navigate to='/login' />} />
+        <Route path="/alumni/requests" element={authUser?.role === "alumni" ? <IncomingRequests /> : <Navigate to="/" />} />
+        <Route path="/alumni/connections" element={authUser?.role === "alumni" ? <Connections /> : <Navigate to="/" />} />
         {!authUser && <Route path='/reset-password/:resetToken' element={<ResetPasswordPage />} />}
         <Route
           path="/admin/jobs"

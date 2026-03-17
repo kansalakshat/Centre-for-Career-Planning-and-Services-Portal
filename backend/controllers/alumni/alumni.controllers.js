@@ -1,4 +1,5 @@
 import Alumni from '../../models/Alumni.model.js';
+import User from '../../models/user.model.js';
 
 // THESE ARE THE CONTROLLER FOR STUDENT PAGE.
 
@@ -41,6 +42,10 @@ export const updatePrivacySettings = async (req, res) => {
       },
       { new: true }
     );
+
+    if (!alumni) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     res.json({
       success: true,

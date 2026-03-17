@@ -153,14 +153,19 @@ function AlumniCard({ alum, index, authUser,requests, onEditAlumni, onDeleteAlum
         onClose={() => setIsModalOpen(false)}
         onSubmit={async ({ purpose, message }) => {
           const success = await connect(alum._id, purpose, message);
-          setRequests((prev) => [
-            ...prev,
-            {
-              alumniId: { _id: alum._id },
-              status: "pending"
-            }
-          ]);
           if (success) {
+            setRequests((prev) => {
+              const filtered = prev.filter(
+                (r) => String(r.alumniId?._id || r.alumniId) !== String(alum._id)
+              );
+              return [
+                ...filtered,
+                {
+                  alumniId: { _id: alum._id },
+                  status: "pending"
+                }
+              ];
+            });
             setIsModalOpen(false);
           }
         }}

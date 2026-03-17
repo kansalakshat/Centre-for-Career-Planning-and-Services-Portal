@@ -71,7 +71,7 @@ const Alumni = () => {
         await deleteAlumni(id, token);
         setAlumniList(alumniList.filter((a) => a._id !== id));
       } catch (error) {
-        toast.error("Failed to delete alumni", error);
+        toast.error(`Failed to delete alumni: ${error.message || error}`);
       }
     }
   }

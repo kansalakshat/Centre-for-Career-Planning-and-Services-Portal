@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../src/api/api";
+import api from "../api/api";
 import Sidebar from "../components/Sidebar";
 
 const IncomingRequests = () => {
