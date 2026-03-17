@@ -4,6 +4,7 @@ import ApplyModal from "../../components/ApplyModel";
 import { fetchSavedApplications, unsaveJob } from "../../api/useSavedJobs";
 import { fetchMyApplications } from "../../api/useApply";
 import JobCard from "../../components/JobCard";
+import JobDetailModal from "../../components/JobDetailModal";
 import { toast } from "react-hot-toast";
 
 const SavedApplicationsPage = () => {
@@ -12,6 +13,7 @@ const SavedApplicationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [detailJob, setDetailJob] = useState(null);
 
   useEffect(() => {
     const loadAll = async () => {
@@ -104,6 +106,7 @@ const SavedApplicationsPage = () => {
                 savedJobs={savedApps}
                 openApplyModal={openApplyModal}
                 handleSaveJob={handleUnsave}
+                onCardClick={setDetailJob}
               />
             ))}
           </div>
@@ -116,6 +119,10 @@ const SavedApplicationsPage = () => {
             onClose={() => setIsModalOpen(false)}
             onApplied={handleApplied}
           />
+        )}
+
+        {detailJob && (
+          <JobDetailModal job={detailJob} onClose={() => setDetailJob(null)} />
         )}
       </main>
     </div>
