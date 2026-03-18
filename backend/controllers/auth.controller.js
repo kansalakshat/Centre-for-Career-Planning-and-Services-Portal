@@ -138,8 +138,6 @@ export const sendCodeAgain = async (req, res) => {
 }
 
 export const verifyEmail = async (req, res) => {
-
-
     try {
         const { userId, code } = req.body;
 
@@ -153,7 +151,7 @@ export const verifyEmail = async (req, res) => {
             _id: userId,
             verificationToken: stringCode,
             verificationTokenExpiresAt: { $gt: Date.now() }
-        })
+        });
 
         if (!user) {
             return res.status(400).json({ success: false, message: 'Invalid or expired verification code' });
@@ -165,16 +163,22 @@ export const verifyEmail = async (req, res) => {
 
         // If alumni, create the Alumni record from pending data
         if (user.role === "alumni" && user.pendingAlumniData) {
-            const alumniRecord = new Alumni({
-                name: user.name,
-                Email: user.email,
-                InstituteId: user.pendingAlumniData.instituteId,
-                MobileNumber: user.pendingAlumniData.mobileNumber,
-                batch: user.pendingAlumniData.batch,
-                company: user.pendingAlumniData.company || "",
-                linkedin: user.pendingAlumniData.linkedin || "",
-            });
-            await alumniRecord.save();
+            await Alumni.findOneAndUpdate(
+                { Email: user.email },
+                {
+                    $set: {
+                        name: user.name,
+                        Email: user.email,
+                        InstituteId: user.pendingAlumniData.instituteId,
+                        MobileNumber: user.pendingAlumniData.mobileNumber,
+                        batch: user.pendingAlumniData.batch,
+                        company: user.pendingAlumniData.company || "",
+                        linkedin: user.pendingAlumniData.linkedin || "",
+                    }
+                },
+                { upsert: true, runValidators: true }
+            );
+
             user.pendingAlumniData = undefined;
         }
 
@@ -183,14 +187,18 @@ export const verifyEmail = async (req, res) => {
         const token = generateTokenAndSetCookie(newUser._id, res);
 
         const userData = {
-
             _id: newUser._id,
             name: newUser.name,
             email: newUser.email,
             role: newUser.role,
-        }
+        };
 
-        res.status(201).json({ success: true, message: "Email verified successfully", userData, token });
+        res.status(201).json({
+            success: true,
+            message: "Email verified successfully",
+            userData,
+            token
+        });
 
     } catch (e) {
         console.error("Error in verifyEmail controller", e.message);
