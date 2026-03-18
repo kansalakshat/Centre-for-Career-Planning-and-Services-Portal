@@ -1,10 +1,8 @@
 import Alumni from '../../models/Alumni.model.js';
-<<<<<<< FOSSOVERFLOW25-26
+
 import Company from "../../models/company.model.js";
-=======
 import User from '../../models/user.model.js';
 
->>>>>>> FOSSOVERFLOW25-26
 // THESE ARE THE CONTROLLER FOR STUDENT PAGE.
 
 export const alumniList = async (req, res) => {
