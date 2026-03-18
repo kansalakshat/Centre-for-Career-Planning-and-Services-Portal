@@ -1,5 +1,10 @@
 import Alumni from '../../models/Alumni.model.js';
+<<<<<<< FOSSOVERFLOW25-26
 import Company from "../../models/company.model.js";
+=======
+import User from '../../models/user.model.js';
+
+>>>>>>> FOSSOVERFLOW25-26
 // THESE ARE THE CONTROLLER FOR STUDENT PAGE.
 
 export const alumniList = async (req, res) => {
@@ -22,6 +27,37 @@ export const searchAlumniByJobId = async (req, res) => {
     res.json(alumni);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const updatePrivacySettings = async (req, res) => {
+  try {
+    const alumniId = req.user.id;
+
+    const { allowMessages, departmentOnly } = req.body;
+
+    const alumni = await User.findByIdAndUpdate(
+      alumniId,
+      {
+        privacySettings: {
+          allowMessages,
+          departmentOnly
+        }
+      },
+      { new: true }
+    );
+
+    if (!alumni) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      privacySettings: alumni.privacySettings
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update privacy settings" });
   }
 };
 

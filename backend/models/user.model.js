@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+
     batch: {
         type: Number,
         required: false
@@ -47,6 +48,16 @@ const userSchema = new mongoose.Schema({
     skills: {
         type: [String],
         default: []
+    },
+    privacySettings: {
+        allowMessages: {
+            type: Boolean,
+            default: true
+        },
+        departmentOnly: {
+            type: Boolean,
+            default: false
+        }
     }
 })
 

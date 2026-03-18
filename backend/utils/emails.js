@@ -57,5 +57,20 @@ const sendPasswordResetSuccessEmail = async (email) => {
     }
 }
 
+const sendEmail = async ({ to, subject, html }) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"CCPS Portal" <${process.env.SMTP_SENDER_EMAIL}>`,
+      to,
+      subject,
+      html,
+    });
 
-export { sendVerificationEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail };
+    console.log("Email sent:", info.response);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
+
+
+export { sendVerificationEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail, sendEmail};
