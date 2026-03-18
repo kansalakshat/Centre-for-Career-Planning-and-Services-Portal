@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    },
+    pendingAlumniData: {
+        type: Object,
+        default: undefined
     }
 })
 

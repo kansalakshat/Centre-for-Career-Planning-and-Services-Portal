@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Alumni from "../models/Alumni.model.js";
 import crypto from 'crypto';
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
@@ -19,7 +20,7 @@ export const signup = async (req, res) => {
                     message: 'Only IIT Bhilai emails are allowed',
                 });
             }
-        } else if (role === "recruiter") {
+        } else if (role === "recruiter" || role === "alumni") {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 return res.status(400).json({
@@ -30,8 +31,19 @@ export const signup = async (req, res) => {
         } else {
             return res.status(400).json({
                 success: false,
-                message: "Invalid role specified. Must be 'student', 'admin', or 'recruiter'."
+                message: "Invalid role specified. Must be 'student', 'admin', 'recruiter', or 'alumni'."
             });
+        }
+
+        // Validate alumni-specific fields
+        if (role === "alumni") {
+            const { instituteId, mobileNumber, batch } = req.body;
+            if (!instituteId || !mobileNumber || !batch) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Institute ID, Mobile Number, and Batch are required for alumni signup."
+                });
+            }
         }
         const user = await User.findOne({ email });
         const verificationToken = Math.floor(100000 + (Math.random() * 900000)).toString();
@@ -44,9 +56,18 @@ export const signup = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, salt);
 
             user.name = name;
+            user.role = role;
             user.password = hashedPassword;
             user.verificationToken = verificationToken;
             user.verificationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000;
+
+            // Update alumni data if re-signing up as alumni
+            if (role === "alumni") {
+                const { instituteId, mobileNumber, batch, company, linkedin } = req.body;
+                user.pendingAlumniData = { instituteId, mobileNumber, batch, company, linkedin };
+            } else {
+                user.pendingAlumniData = undefined;
+            }
 
             await user.save();
             await sendVerificationEmail(user.email, verificationToken);
@@ -65,6 +86,12 @@ export const signup = async (req, res) => {
             password: hashedPassword,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 1 * 60 * 60 * 1000  // 1 hour
+        }
+
+        // Store alumni-specific data temporarily for creation after email verification
+        if (role === "alumni") {
+            const { instituteId, mobileNumber, batch, company, linkedin } = req.body;
+            userData.pendingAlumniData = { instituteId, mobileNumber, batch, company, linkedin };
         }
 
         const newUser = new User(userData);
@@ -135,6 +162,21 @@ export const verifyEmail = async (req, res) => {
         user.isVerified = true;
         user.verificationToken = undefined;
         user.verificationTokenExpiresAt = undefined;
+
+        // If alumni, create the Alumni record from pending data
+        if (user.role === "alumni" && user.pendingAlumniData) {
+            const alumniRecord = new Alumni({
+                name: user.name,
+                Email: user.email,
+                InstituteId: user.pendingAlumniData.instituteId,
+                MobileNumber: user.pendingAlumniData.mobileNumber,
+                batch: user.pendingAlumniData.batch,
+                company: user.pendingAlumniData.company || "",
+                linkedin: user.pendingAlumniData.linkedin || "",
+            });
+            await alumniRecord.save();
+            user.pendingAlumniData = undefined;
+        }
 
         const newUser = await user.save();
 

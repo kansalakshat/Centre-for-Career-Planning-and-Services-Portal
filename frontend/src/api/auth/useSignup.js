@@ -8,17 +8,25 @@ const useSignup = () => {
     const { setTempUserId } = useAuthContext();
     const { backendUrl, setShowVerifyEmail } = useAppContext();
 
-    const signup = async ({ name, email, password, confirmPassword, role }) => {
-        const success = handleInputError({ name, email, password, confirmPassword, role });
+    const signup = async ({ name, email, password, confirmPassword, role, instituteId, mobileNumber, batch, company, linkedin }) => {
+        const success = handleInputError({ name, email, password, confirmPassword, role, instituteId, mobileNumber, batch });
         if (!success) return;
         setLoading(true);
         try {
+            const body = { name, email, password, role };
+            if (role === 'alumni') {
+                body.instituteId = instituteId;
+                body.mobileNumber = mobileNumber;
+                body.batch = Number(batch);
+                body.company = company;
+                body.linkedin = linkedin;
+            }
             const res = await fetch(`${backendUrl}/api/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ name, email, password, role })
+                body: JSON.stringify(body)
             })
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -39,7 +47,7 @@ const useSignup = () => {
     return { loading, signup };
 }
 
-function handleInputError({ name, email, password, confirmPassword, role }) {
+function handleInputError({ name, email, password, confirmPassword, role, instituteId, mobileNumber, batch }) {
     if (!name || !email || !password || !confirmPassword || !role) {
         toast.error('All fields are required');
         return false;
@@ -48,8 +56,14 @@ function handleInputError({ name, email, password, confirmPassword, role }) {
         toast.error('Passwords do not match');
         return false;
     }
+    if (role === 'alumni') {
+        if (!instituteId || !mobileNumber || !batch) {
+            toast.error('Institute ID, Mobile Number, and Batch are required for alumni signup');
+            return false;
+        }
+    }
     return true;
 }
 
 
-export default useSignup
+export default useSignup
