@@ -134,9 +134,19 @@ export const updateRequestStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
+    const user = await User.findById(req.user.id);
+    const alumniProfile = await Alumni.findOne({ Email: user.email });
+    if (!alumniProfile) {
+      return res.status(404).json({ message: "Alumni profile not found" });
+    }
+
     const request = await ConnectionRequest.findById(req.params.id);
 
     if (!request) return res.status(404).json({ message: "Not found" });
+
+    if (request.alumniId.toString() !== alumniProfile._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to modify this request" });
+    }
 
     request.status = status;
     await request.save();
@@ -164,12 +174,7 @@ export const getMyRequests = async (req, res) => {
 
 export const getIncomingRequests = async (req, res) => {
   try {
-
-    console.log("Logged in user:", req.userId);
-
     const user = await User.findById(req.userId);
-
-    console.log("User email:", user.email);
 
     const alumniProfile = await Alumni.findOne({
       Email: user.email
@@ -181,13 +186,9 @@ export const getIncomingRequests = async (req, res) => {
       });
     }
 
-    console.log("Alumni profile id:", alumniProfile._id);
-
     const requests = await ConnectionRequest.find({
       alumniId: alumniProfile._id
     }).populate("studentId", "name email");
-
-    console.log("Requests found:", requests);
 
     res.status(200).json({
       success: true,
@@ -195,26 +196,33 @@ export const getIncomingRequests = async (req, res) => {
     });
 
   } catch (error) {
-
     console.error("Error fetching incoming requests:", error);
 
     res.status(500).json({
       success: false,
       message: "Server error"
     });
-
   }
 };
 
 export const acceptRequest = async (req, res) => {
   try {
-
     const { requestId } = req.params;
+
+    const user = await User.findById(req.user.id);
+    const alumniProfile = await Alumni.findOne({ Email: user.email });
+    if (!alumniProfile) {
+      return res.status(404).json({ message: "Alumni profile not found" });
+    }
 
     const request = await ConnectionRequest.findById(requestId);
 
     if (!request) {
       return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (request.alumniId.toString() !== alumniProfile._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to modify this request" });
     }
 
     request.status = "accepted";
@@ -226,8 +234,7 @@ export const acceptRequest = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("Accept request error:", error);
-
+    console.error("Accept request error:", error);
     res.status(500).json({
       message: "Server error"
     });
@@ -236,8 +243,13 @@ export const acceptRequest = async (req, res) => {
 
 export const declineRequest = async (req, res) => {
   try {
-
     const { requestId } = req.params;
+
+    const user = await User.findById(req.user.id);
+    const alumniProfile = await Alumni.findOne({ Email: user.email });
+    if (!alumniProfile) {
+      return res.status(404).json({ message: "Alumni profile not found" });
+    }
 
     const request = await ConnectionRequest.findById(requestId);
 
@@ -245,6 +257,10 @@ export const declineRequest = async (req, res) => {
       return res.status(404).json({
         message: "Request not found"
       });
+    }
+
+    if (request.alumniId.toString() !== alumniProfile._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to modify this request" });
     }
 
     request.status = "declined";
@@ -256,9 +272,7 @@ export const declineRequest = async (req, res) => {
     });
 
   } catch (error) {
-
-    console.log("Decline request error:", error);
-
+    console.error("Decline request error:", error);
     res.status(500).json({
       message: "Server error"
     });

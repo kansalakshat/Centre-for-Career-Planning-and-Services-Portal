@@ -6,28 +6,38 @@ const IncomingRequests = () => {
 
   const [requests, setRequests] = useState([]);
 
- const fetchRequests = async () => {
-  try {
-    const res = await api.get("/api/connect/incoming");
-    const pendingRequests = res.data.requests.filter(req => req.status === "pending");
-    setRequests(pendingRequests);
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const fetchRequests = async () => {
+    try {
+      const res = await api.get("/api/connect/incoming");
+      const pendingRequests = res.data.requests.filter(req => req.status === "pending");
+      setRequests(pendingRequests);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
   const acceptRequest = async (id) => {
-    await api.put(`/api/connect/accept/${id}`);
-    fetchRequests();
+    try {
+      await api.put(`/api/connect/accept/${id}`);
+      fetchRequests();
+    } catch (error) {
+      console.error("Failed to accept request:", error);
+      // Consider showing a toast/alert to the user
+    }
   };
 
   const declineRequest = async (id) => {
-    await api.put(`/api/connect/decline/${id}`);
-    fetchRequests();
+    try {
+      await api.put(`/api/connect/decline/${id}`);
+      fetchRequests();
+    } catch (error) {
+      console.error("Failed to decline request:", error);
+      // Consider showing a toast/alert to the user
+    }
   };
 
   return (
