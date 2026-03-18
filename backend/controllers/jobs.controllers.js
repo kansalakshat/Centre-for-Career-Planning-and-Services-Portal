@@ -1,12 +1,40 @@
+import { getIntelligentFeed } from "../services/jobintelligence.service.js";
+import Company from "../models/company.model.js";
+
+
 import JobPosting from '../models/jobPosting.model.js';
 import mongoose from 'mongoose';
+
+export const jobList = async (req, res) => {
+    try {
+        const result = await getIntelligentFeed(req.user, req.query);
+        res.status(200).json(result);
+    } catch (error) {
+    console.error("Error in jobList:", error);
+
+    if (
+        error.message.includes("Invalid job type") ||
+        error.message.includes("Invalid batch") ||
+        error.message.includes("Invalid pagination") ||
+        error.message.includes("Invalid sort field") ||
+        error.message.includes("Invalid sort order")
+    ) {
+        return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+        message: "Internal server error"
+    });
+    }
+};
+
 
 export const jobCreate = async (req, res) => {
     try {
         const {
             jobTitle,
             jobDescription,
-            Company,
+            Company: companyName,
             requiredSkills,
             Type,
             batch,
@@ -17,10 +45,17 @@ export const jobCreate = async (req, res) => {
             relevanceScore
         } = req.body;
         // Create a new job posting instance
+        const normalizedCompany = companyName.trim().toLowerCase();
+        let companyDoc = await Company.findOne({ name: normalizedCompany });
+
+        if (!companyDoc) {
+            companyDoc = await Company.create({ name: normalizedCompany });
+        }
         const newJobPosting = new JobPosting({
             jobTitle,
             jobDescription,
-            Company,
+            Company: normalizedCompany,
+            companyId: companyDoc._id,
             requiredSkills,
             Type,
             batch,
@@ -92,30 +127,6 @@ export const jobDelete = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: 'Error deleting job posting',
-            error: error.message
-        });
-    }
-};
-
-
-export const jobList = async (req, res) => {
-    try {
-        const jobPostings = await JobPosting.aggregate([{
-            $lookup:{
-                from: "jobapplications",
-                localField: "_id",
-                foreignField: "jobId",
-                as: "jobApplications"
-            }
-        }]);
-        res.status(200).json({
-            message: 'Job postings retrieved successfully',
-            jobs: jobPostings
-        });
-    } catch (error) {
-        console.error("Error in jobList:", error);
-        res.status(500).json({
-            message: 'Error retrieving job postings',
             error: error.message
         });
     }
