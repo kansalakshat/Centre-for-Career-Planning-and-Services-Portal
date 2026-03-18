@@ -1,5 +1,6 @@
 import SavedJob from "../models/savedJobs.model.js";
 import JobPosting from "../models/jobPosting.model.js";
+import { getIntelligentFeed } from "../services/jobintelligence.service.js";
 
 export const saveJob = async (req, res) => {
   try {
@@ -21,8 +22,23 @@ export const getSavedJobs = async (req, res) => {
   try {
     const userId = req.user._id;
     const savedJobs = await SavedJob.find({ userId }).populate("jobId");
-    console.log("Fetched saved applications:", savedJobs);
-    res.json({ savedJobs });
+
+    const result = await getIntelligentFeed(req.user, {});
+    const enrichedJobs = result.jobs;
+
+    const enrichedSavedJobs = savedJobs.map((saved) => {
+      const enriched = enrichedJobs.find(
+        (job) => job._id.toString() === saved.jobId._id.toString()
+      );
+
+      return {
+        ...saved.toObject(),
+        jobId: enriched || saved.jobId
+      };
+    });
+
+    res.json({ savedJobs: enrichedSavedJobs });
+
   } catch (error) {
     console.error("Error fetching saved jobs:", error);
     res.status(500).json({ message: "Internal Server Error" });

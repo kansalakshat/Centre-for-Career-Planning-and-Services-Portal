@@ -1,6 +1,23 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+
 
 const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, savedJobs = [] }) => {
+    const [showAlumni, setShowAlumni] = useState(false);
+    const popupRef = useRef(null);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (popupRef.current && !popupRef.current.contains(event.target)) {
+                setShowAlumni(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
@@ -37,7 +54,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
     return (
         <div
             key={job._id}
-            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 transition-all duration-300 relative overflow-visible"
         >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-transparent to-indigo-50/0 group-hover:from-blue-50/30 group-hover:to-indigo-50/30 transition-all duration-300 rounded-2xl"></div>
 
@@ -53,6 +70,19 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-[#0c4a42] dark:group-hover:text-emerald-300 transition-colors duration-200 relative z-10 line-clamp-2">
                 {job.jobTitle}
             </h2>
+            <span className="badge badge-outline text-xs">
+            👥 {job.totalApplicants} Applicants
+            </span>
+            <br/>
+            {job.eligibilityStatus && (
+            <div className={`mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                job.eligibilityStatus === "Eligible"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : "bg-red-100 text-red-800 border border-red-200"
+            }`}>
+                {job.eligibilityStatus}
+            </div>
+            )}
 
             <div className="flex items-center mb-4 relative z-10">
                 <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl flex items-center justify-center mr-3 group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-300">
@@ -73,13 +103,62 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                 <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.Company}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Company</p>
+                    {typeof job.skillMatchScore === "number" && (
+                    <div className="mt-2 text-s text-gray-600 dark:text-gray-400">
+                        Skill Match: {(job.skillMatchScore * 100).toFixed(0)}%
+                    </div>
+                    )}
                 </div>
+
+                
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3 relative z-10">
                 {job.jobDescription}
             </p>
+            
+            {job.alumniCount > 0 && (
+                <div className="mt-3 text-xs text-blue-600 dark:text-white font-medium">
+                    Alumni from this company : {job.alumniCount} 
+                </div>
+            )}
+            {/* allumni view */}
+                            {job.alumniCount > 0 && (
+                <div className="relative mt-2">
+                    <button
+                        onClick={() => setShowAlumni(prev => !prev)}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
+                    >
+                         Click to View
+                    </button>
 
+                    {showAlumni && (
+                        <div
+                            ref={popupRef}
+                            className="absolute z-50 mt-2 w-72 max-h-64 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-4" >
+                            <p className="text-xs font-semibold text-gray-600 dark:text-green-300 mb-2">
+                                Alumni Connections
+                            </p>
+
+                            {Array.isArray(job.alumniList) && job.alumniList.map((alum, idx) => (
+                                <div key={idx} className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                    <div className="font-medium text-gray-700 dark:text-gray-200">
+                                        {alum.name}
+                                    </div>
+                                    <div>
+                                        Batch {alum.batch}
+                                    </div>
+                                    {alum.roles?.length > 0 && (
+                                        <div className="italic">
+                                            {alum.roles.join(", ")}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
             {!isAppliedJob && (
                 <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
                     <div className="flex flex-col">
