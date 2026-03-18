@@ -92,3 +92,23 @@ export const PASSWORD_RESET_REQUEST_TEMPLATE = `
 </body>
 </html>
 `;
+
+export const CONNECTION_REQUEST_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>New Connection Request</title>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+  <h2>You have a new connection request</h2>
+  <p><strong>Student Name:</strong> {studentName}</p>
+  <p><strong>Purpose:</strong> {purpose}</p>
+  <p><strong>Message:</strong></p>
+  <p>{message}</p>
+  <br/>
+  <p>Login to your CCPS portal to respond.</p>
+  <p>Best regards,<br/>CCPS Team</p>
+</body>
+</html>
+`;
