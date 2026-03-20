@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import apiRouter from "./routes/index.router.js";
 import scheduleJobs from "./utils/scheduler.js";
+import connectionRouter from "./routes/connect.routes.js";
+import messageRouter from "./routes/message.routes.js"
 dotenv.config();
 
 const port = process.env.PORT || 3000;
@@ -25,6 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Use all API routes
 app.use("/api", apiRouter);
+
+app.use("/api/connect", connectionRouter);
+app.use("/api/messages", messageRouter);
 
 // Start the server
 app.listen(port, async () => {

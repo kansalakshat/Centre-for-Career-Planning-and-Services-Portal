@@ -10,6 +10,7 @@ import {
   deleteAlumni,
   updateAlumni,
   addAlumni,
+  updatePrivacySettings
 } from '../../controllers/alumni/alumni.controllers.js';
 
 const router = express.Router();
@@ -26,5 +27,6 @@ router.get('/search-by-name', searchAlumniByName);
 router.post('/', addAlumni);
 router.put('/:id', updateAlumni);
 router.delete('/:id', deleteAlumni);
+router.put("/privacy", updatePrivacySettings);
 
 export default router;

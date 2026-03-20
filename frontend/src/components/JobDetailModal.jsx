@@ -21,13 +21,22 @@ const JobDetailModal = ({ job, onClose }) => {
                     }`}>
                     <div className="flex items-start justify-between">
                         <div className="flex-1 pr-4">
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-2 mb-3 flex-wrap">
                                 <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-semibold rounded-full">
                                     {job.Type}
                                 </span>
                                 {job.source && job.source !== 'Internal' && (
                                     <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-semibold rounded-full">
                                         via {job.source}
+                                    </span>
+                                )}
+                                {job.eligibilityStatus && (
+                                    <span className={`px-3 py-1 backdrop-blur-md text-xs font-semibold rounded-full ${
+                                        job.eligibilityStatus === "Eligible"
+                                            ? "bg-green-400/30 text-green-100"
+                                            : "bg-red-400/30 text-red-100"
+                                    }`}>
+                                        {job.eligibilityStatus}
                                     </span>
                                 )}
                             </div>
@@ -81,6 +90,36 @@ const JobDetailModal = ({ job, onClose }) => {
                         </div>
                     </div>
 
+                    {/* Skill Match & Applicants row */}
+                    {(typeof job.skillMatchScore === "number" || typeof job.totalApplicants === "number") && (
+                        <div className="grid grid-cols-2 gap-3">
+                            {typeof job.skillMatchScore === "number" && (
+                                <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-3">
+                                    <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mb-1">Skill Match</p>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 bg-indigo-200 dark:bg-indigo-800 rounded-full h-2">
+                                            <div
+                                                className="bg-indigo-600 dark:bg-indigo-400 h-2 rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.round(job.skillMatchScore * 100)}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
+                                            {Math.round(job.skillMatchScore * 100)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            {typeof job.totalApplicants === "number" && (
+                                <div className="bg-pink-50 dark:bg-pink-900/30 rounded-xl p-3">
+                                    <p className="text-xs text-pink-500 dark:text-pink-400 font-medium mb-1">Applicants</p>
+                                    <p className="text-sm font-bold text-pink-700 dark:text-pink-300">
+                                        👥 {job.totalApplicants}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Description */}
                     <div>
                         <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Description</h3>
@@ -106,6 +145,35 @@ const JobDetailModal = ({ job, onClose }) => {
                         </div>
                     )}
 
+                    {/* Alumni Connections */}
+                    {job.alumniCount > 0 && Array.isArray(job.alumniList) && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                                Alumni Connections ({job.alumniCount})
+                            </h3>
+                            <div className="space-y-3">
+                                {job.alumniList.map((alum, idx) => (
+                                    <div key={idx} className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/40">
+                                        <div className="w-8 h-8 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <span className="text-blue-700 dark:text-blue-300 text-xs font-bold">
+                                                {alum.name?.charAt(0)?.toUpperCase() || '?'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{alum.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Batch {alum.batch}</p>
+                                            {alum.roles?.length > 0 && (
+                                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 italic">
+                                                    {alum.roles.join(", ")}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Application Link */}
                     {(job.ApplicationLink || job.originalLink) && (
                         <div>
@@ -125,7 +193,7 @@ const JobDetailModal = ({ job, onClose }) => {
                     )}
 
                     {/* Extra Info */}
-                    {(job.Expiry || job.author) && (
+                    {(job.Expiry || job.author || job.eligibilityReason) && (
                         <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-400 dark:text-gray-500">
                                 {job.Expiry && (
@@ -133,6 +201,11 @@ const JobDetailModal = ({ job, onClose }) => {
                                 )}
                                 {job.author && (
                                     <span>Posted by: {job.author}</span>
+                                )}
+                                {job.eligibilityReason && job.eligibilityStatus !== "Eligible" && (
+                                    <span className="text-red-400 dark:text-red-500">
+                                        ⚠ {job.eligibilityReason}
+                                    </span>
                                 )}
                             </div>
                         </div>

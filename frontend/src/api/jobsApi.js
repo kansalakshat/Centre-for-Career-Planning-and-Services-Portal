@@ -50,8 +50,8 @@ export const updateJobPosting = async (jobId, jobData, token) => {
  * @returns {Promise<object>} The response data from the server.
  */
 export const fetchJobs = async (token, page = 1, limit = 15, search = "") => {
-    // 🔑 Fix: Use the correct, full endpoint: /api/jobs
-    let url = `${JOBS_ENDPOINT}?page=${page}&limit=${limit}`;
+    // Admin uses the legacy endpoint with applicationCount sorting
+    let url = `${JOBS_ENDPOINT}/admin?page=${page}&limit=${limit}`;
     if (search) {
         url += `&search=${encodeURIComponent(search)}`;
     }

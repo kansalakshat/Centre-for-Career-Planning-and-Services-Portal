@@ -17,6 +17,7 @@ const initialData = {
   cgpa: "",
   imageUrl: "",
   resumeUrl: "",
+  skills: "",
 };
 
 export default function Profile() {
@@ -58,7 +59,14 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ...formData, batch: 2025, status: "active" };
+    const payload = {
+      ...formData,
+      skills: formData.skills
+        ? formData.skills.split(",").map(s => s.trim().toLowerCase())
+        : [],
+      batch: 2025,
+      status: "active"
+    };
     try {
       if (!profile.studentID) {
         await createStudentProfile(authUser._id, payload);
@@ -181,6 +189,7 @@ export default function Profile() {
                     { name: "cgpa", label: "CGPA", type: "number", step: "0.01", min: "0", max: "10" },
                     { name: "imageUrl", label: "Profile Image URL", type: "url" },
                     { name: "resumeUrl", label: "Resume URL", type: "url" },
+                    { name: "skills", label: "Skills (comma separated)", type: "text" },
                   ].map((field) => (
                     <div key={field.name} className="flex flex-col">
                       <label className="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{field.label}</label>

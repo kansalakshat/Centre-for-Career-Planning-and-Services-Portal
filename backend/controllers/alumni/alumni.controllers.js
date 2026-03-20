@@ -1,4 +1,7 @@
 import Alumni from '../../models/Alumni.model.js';
+import User from '../../models/user.model.js';
+
+import Company from "../../models/company.model.js";
 
 // THESE ARE THE CONTROLLER FOR STUDENT PAGE.
 
@@ -22,6 +25,37 @@ export const searchAlumniByJobId = async (req, res) => {
     res.json(alumni);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const updatePrivacySettings = async (req, res) => {
+  try {
+    const alumniId = req.user.id;
+
+    const { allowMessages, departmentOnly } = req.body;
+
+    const alumni = await User.findByIdAndUpdate(
+      alumniId,
+      {
+        privacySettings: {
+          allowMessages,
+          departmentOnly
+        }
+      },
+      { new: true }
+    );
+
+    if (!alumni) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      privacySettings: alumni.privacySettings
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update privacy settings" });
   }
 };
 
@@ -106,10 +140,29 @@ export const searchAlumniByName = async (req, res) => {
 
 // Add new alumni
 export const addAlumni = async (req, res) => {
-  const newAlumni = new Alumni(req.body);
-
   try {
+    const { company, ...rest } = req.body;
+
+    if (!company) {
+      return res.status(400).json({ message: "Company is required" });
+    }
+
+    const normalizedCompany = company.trim().toLowerCase();
+
+    let companyDoc = await Company.findOne({ name: normalizedCompany });
+
+    if (!companyDoc) {
+      companyDoc = await Company.create({ name: normalizedCompany });
+    }
+
+    const newAlumni = new Alumni({
+      ...rest,
+      company: normalizedCompany,
+      companyId: companyDoc._id
+    });
+
     const savedAlumni = await newAlumni.save();
+
     res.status(201).json(savedAlumni);
   } catch (error) {
     res.status(400).json({ message: "Failed to add alumni", error });

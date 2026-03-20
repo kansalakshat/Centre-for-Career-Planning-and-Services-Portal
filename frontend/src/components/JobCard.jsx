@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 
 const WithdrawButton = ({ onWithdraw, jobId }) => (
     <button
@@ -94,7 +94,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
                 <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.Company}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {job.location || (job.JobLocation && job.JobLocation[0]) || 'Location not specified'}
+                        {job.location || 'Location not specified'}
                     </p>
                 </div>
             </div>
