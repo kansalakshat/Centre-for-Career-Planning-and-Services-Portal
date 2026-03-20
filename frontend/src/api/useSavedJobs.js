@@ -26,7 +26,7 @@ export const fetchSavedApplications = async () => {
     return res.data.savedJobs;
   } catch (error) {
     console.error("Error fetching saved applications:", error);
-    return [];
+    throw error;
   }
 };
 

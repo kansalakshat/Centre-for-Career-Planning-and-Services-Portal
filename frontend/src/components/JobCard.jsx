@@ -1,4 +1,16 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+const WithdrawButton = ({ onWithdraw, jobId }) => (
+    <button
+        onClick={() => onWithdraw(jobId)}
+        className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
+    >
+        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Withdraw
+    </button>
+);
 
 const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, onWithdraw, onCardClick, isAppliedJob, savedJobs = [] }) => {
     const application = isAppliedJob ? null : myApps?.find((a) => {
@@ -100,17 +112,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
                             <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
                             {status || 'Pending'}
                         </span>
-                        {onWithdraw && (
-                            <button
-                                onClick={() => onWithdraw(job._id)}
-                                className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
-                            >
-                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Withdraw
-                            </button>
-                        )}
+                        {onWithdraw && <WithdrawButton onWithdraw={onWithdraw} jobId={job._id} />}
                     </div>
                 </div>
             )}
@@ -126,17 +128,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
                                     <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
                                     {status || 'Pending'}
                                 </span>
-                                {onWithdraw && (
-                                    <button
-                                        onClick={() => onWithdraw(job._id)}
-                                        className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
-                                    >
-                                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Withdraw
-                                    </button>
-                                )}
+                                {onWithdraw && <WithdrawButton onWithdraw={onWithdraw} jobId={job._id} />}
                             </div>
                         ) : (
                             <div className="flex gap-2">
@@ -144,7 +136,7 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, 
                                     <button
                                         onClick={() => {
                                             window.open(job.originalLink, '_blank', 'noopener,noreferrer');
-                                            onExternalApply(job);
+                                            onExternalApply?.(job);
                                         }}
                                         className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
                                     >

@@ -7,7 +7,7 @@ const JobFilter = ({
   setFilterSource, 
   filterLocation, 
   setFilterLocation,
-  availableSources,
+  availableSources = [],
   availableLocations = []
 }) => {
   return (
