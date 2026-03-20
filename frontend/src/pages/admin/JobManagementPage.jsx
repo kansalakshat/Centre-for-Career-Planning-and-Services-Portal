@@ -66,8 +66,14 @@ const JobManagementPage = () => {
         loadJobs(1, searchTerm);
     }, [loadJobs]); // Initial load
 
+    const isFirstRender = React.useRef(true);
+
     // Debounce the search input so it doesn't slam the API every keystroke
     useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
         const delaySearch = setTimeout(() => {
             setCurrentPage(1);
             loadJobs(1, searchTerm);

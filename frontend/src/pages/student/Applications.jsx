@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast";
 import { useEffect, useState } from "react";
 // Ensure fetchAppliedJobs is imported from your API service file
-import { fetchJobs, fetchMyApplications, fetchAppliedJobs, applyToJob, withdrawApplication } from "../../api/useApply";
+import { fetchAllJobs, fetchMyApplications, fetchAppliedJobs, applyToJob, withdrawApplication } from "../../api/useApply";
 import Sidebar from "../../components/Sidebar";
 import ApplyModal from "../../components/ApplyModel";
 import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
@@ -44,7 +44,7 @@ const Applications = () => {
   const loadAll = async () => {
     try {
       const [jobList, { onCampus, offCampus }, dedicatedAppliedList, savedList] = await Promise.all([
-        fetchJobs(),
+        fetchAllJobs(),
         fetchMyApplications(),
         fetchAppliedJobs(), // Fetch dedicated applied list
         fetchSavedApplications(), // Fetch saved jobs
@@ -64,7 +64,6 @@ const Applications = () => {
 
   const fetchProfile = () => {
     if (!authUser?._id) return;
-    setLoading(true);
     getStudentProfile(authUser._id)
       .then((data) => {
         setProfile({ ...userData, ...data });
@@ -76,7 +75,7 @@ const Applications = () => {
           phone: authUser.phone,
           address: authUser.address,
         }));
-      }).finally(() => setLoading(false));
+      });
   };
 
   useEffect(() => {
@@ -162,7 +161,7 @@ const Applications = () => {
 
   const availableSources = Array.from(new Set(jobs.map(j => j.source || 'Internal'))).filter(Boolean);
   const availableLocations = Array.from(new Set(jobs.map(j => 
-    j.location || (j.JobLocation && j.JobLocation.length > 0 ? j.JobLocation[0] : '')
+    j.location || ''
   ))).filter(Boolean).sort();
 
   const filteredJobs = jobs.filter((job) => {
@@ -176,7 +175,7 @@ const Applications = () => {
     const sourceMatch = filterSource === "All" || jobSource === filterSource;
     
     // 3. Filter by Location
-    const jobLoc = job.location || (job.JobLocation && job.JobLocation.length > 0 ? job.JobLocation[0] : '');
+    const jobLoc = job.location || '';
     const locationMatch = !filterLocation || jobLoc.toLowerCase().includes(filterLocation.toLowerCase());
 
     return searchMatch && sourceMatch && locationMatch;

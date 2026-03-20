@@ -107,6 +107,9 @@ const SavedApplicationsPage = () => {
                 openApplyModal={openApplyModal}
                 handleSaveJob={handleUnsave}
                 onCardClick={setDetailJob}
+                onExternalApply={(job) => {
+                  toast.success(`Opening application for ${job.jobTitle}`);
+                }}
               />
             ))}
           </div>
