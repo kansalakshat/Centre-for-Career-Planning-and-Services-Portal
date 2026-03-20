@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import apiRouter from "./routes/index.router.js";
+import scheduleJobs from "./utils/scheduler.js";
 dotenv.config();
 
 const port = process.env.PORT || 3000;
@@ -25,12 +26,9 @@ app.use(express.urlencoded({ extended: true }));
 // Use all API routes
 app.use("/api", apiRouter);
 
-import scheduleJobs from "./utils/scheduler.js";
-
 // Start the server
-app.listen(port, () => {
-  connectDB();
+app.listen(port, async () => {
+  await connectDB();
   scheduleJobs();
   console.log(`Server is running at port ${port}`);
 });
-

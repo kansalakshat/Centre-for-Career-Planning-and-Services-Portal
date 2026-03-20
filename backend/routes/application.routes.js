@@ -3,9 +3,9 @@ import {
   getStudentApplications,
   applyToJob,
   cancelApplication,
-  getJobApplications,
-updateOnCampusApplicationStatus,
-  getAppliedJobs, 
+   getJobApplications,
+  updateOnCampusApplicationStatus,
+  getAppliedJobs, 
 } from "../controllers/applications.controller.js";
 import { protectRoute, authorizeRoles } from "../middleware/auth.middleware.js";
 

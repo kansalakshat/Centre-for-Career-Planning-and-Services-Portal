@@ -247,7 +247,8 @@ export const jobList = async (req, res) => {
         });
 
         //validation of sort if given
-        if (sortBy && sortBy !== "relevanceScore") {
+        const allowedSortFields = ["relevanceScore", "createdAt", "Deadline", "applicationCount"];
+        if (sortBy && !allowedSortFields.includes(sortBy)) {
             return res.status(400).json({ message: "Invalid sort field" });
         }
 

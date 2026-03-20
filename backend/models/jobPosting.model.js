@@ -55,6 +55,7 @@ const jobPostingSchema = new mongoose.Schema({
     },
     externalId: {
         type: String,
+        index: true,
     },
     originalLink: {
         type: String,
@@ -82,13 +83,12 @@ jobPostingSchema.pre('findOneAndDelete', async function (next) {
 
 // Middleware to cascade delete related SavedJobs when multiple JobPostings are deleted (e.g., Scraper cron job)
 jobPostingSchema.pre('deleteMany', async function (next) {
-    // Attempting to delete many jobs
-    // We get the query filter, e.g., { isScraped: true, createdAt: { $lt: ... } }
-    // First, find all jobs that match this filter so we know their IDs
-    const jobsToDelete = await this.model.find(this.getQuery());
+    // Only fetch _id field to reduce memory footprint
+    const jobsToDelete = await this.model.find(this.getQuery()).select('_id').lean();
     const jobIds = jobsToDelete.map(job => job._id);
 
     if (jobIds.length > 0) {
+        console.log(`Cascade deleting SavedJobs for ${jobIds.length} job postings`);
         await SavedJob.deleteMany({ jobId: { $in: jobIds } });
     }
     next();
