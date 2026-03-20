@@ -13,17 +13,20 @@ const scheduleJobs = () => {
 
             console.log(`Fetched ${externalJobs.length} jobs from external sources.`);
 
-            for (const job of externalJobs) {
-                // Check if job already exists by externalId
-                const exists = await JobPosting.findOne({ externalId: String(job.externalId) });
-                if (!exists) {
-                    await JobPosting.create(job);
-                    console.log(`Saved new job: ${job.jobTitle}`);
-                } else {
-                    // updates if necessary
+            // Bulk upsert for better performance
+            const bulkOps = externalJobs.map(job => ({
+                updateOne: {
+                    filter: { externalId: String(job.externalId) },
+                    update: { $setOnInsert: job },
+                    upsert: true
                 }
+            }));
+
+            if (bulkOps.length > 0) {
+                const result = await JobPosting.bulkWrite(bulkOps, { ordered: false });
+                console.log(`Inserted ${result.upsertedCount} new jobs, matched ${result.matchedCount} existing.`);
             }
-            console.log('New job insertion loop completed.');
+            console.log('Job insertion completed.');
 
             // Cleanup expired / old external jobs (older than 30 days)
             const thirtyDaysAgo = new Date();

@@ -2,6 +2,16 @@ import axios from 'axios';
 
 const BASE_URL = 'https://jooble.org/api/';
 
+const cleanHTML = (str) => {
+    if (!str) return 'No description provided.';
+    return str
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&[a-z]+;/g, '')
+        .trim();
+};
+
 export const fetchJoobleJobs = async (page = 1) => {
     try {
         const JOOBLE_API_KEY = process.env.JOOBLE_API_KEY;
@@ -19,20 +29,11 @@ export const fetchJoobleJobs = async (page = 1) => {
         }, {
             headers: {
                 'Content-type': 'application/json'
-            }
+            },
+            timeout: 30000 // 30 second timeout
         });
 
         if (response.data && response.data.jobs) {
-            const cleanHTML = (str) => {
-                if (!str) return 'No description provided.';
-                return str
-                    .replace(/<[^>]*>?/gm, '') // Remove HTML tags
-                    .replace(/&nbsp;/g, ' ')   // Replace non-breaking spaces
-                    .replace(/&amp;/g, '&')    // Replace ampersands
-                    .replace(/&[a-z]+;/g, '')  // Remove other HTML entities
-                    .trim();
-            };
-
             const mappedJobs = response.data.jobs.map(job => ({
                 jobTitle: job.title,
                 jobDescription: cleanHTML(job.snippet),

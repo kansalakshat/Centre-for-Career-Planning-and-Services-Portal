@@ -2,6 +2,17 @@ import axios from 'axios';
 
 const BASE_URL = 'https://api.adzuna.com/v1/api/jobs';
 
+const cleanHTML = (str) => {
+    if (!str) return 'No description provided.';
+    return str
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&[a-z]+;/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
 export const fetchAdzunaJobs = async (country = 'in', page = 1) => {
     try {
         const ADZUNA_APP_ID = process.env.ADZUNA_APP_ID;
@@ -23,26 +34,15 @@ export const fetchAdzunaJobs = async (country = 'in', page = 1) => {
                     results_per_page: 50,
                     category: category,
                     salary_min: 1200000, // 12 LPA
-                    'content-type': 'application/json',
-                }
+                },
+                timeout: 30000 // 30 second timeout
             });
 
             if (response.data && response.data.results) {
-                const cleanHTML = (str) => {
-                    if (!str) return 'No description provided.';
-                    return str
-                        .replace(/<[^>]*>?/gm, '') // Remove HTML tags
-                        .replace(/&nbsp;/g, ' ')   // Replace non-breaking spaces
-                        .replace(/&amp;/g, '&')    // Replace ampersands
-                        .replace(/&[a-z]+;/g, '')  // Remove other HTML entities
-                        .replace(/\s+/g, ' ')      // Collapse multiple spaces
-                        .trim();
-                };
-
                 const mappedJobs = response.data.results.map(job => ({
                     jobTitle: job.title,
                     jobDescription: cleanHTML(job.description),
-                    Company: job.company.display_name,
+                    Company: job.company?.display_name || 'Unknown Company',
                     requiredSkills: [],
                     Type: 'off-campus',
                     batch: new Date().getFullYear(),
@@ -53,7 +53,7 @@ export const fetchAdzunaJobs = async (country = 'in', page = 1) => {
                     externalId: String(job.id),
                     originalLink: job.redirect_url,
                     isScraped: true,
-                    location: job.location.display_name,
+                    location: job.location?.display_name || 'Location not specified',
                     salary: job.salary_min && job.salary_max 
                         ? (job.salary_min === job.salary_max 
                             ? `${(job.salary_min / 100000).toFixed(1)} LPA` 

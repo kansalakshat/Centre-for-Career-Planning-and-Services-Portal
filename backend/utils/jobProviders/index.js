@@ -9,13 +9,23 @@ export const fetchExternalJobs = async () => {
     for (let page = 1; page <= MAX_PAGES; page++) {
         console.log(`Fetching page ${page} from providers...`);
         
-        // Fetch from Adzuna
-        const adzunaJobs = await fetchAdzunaJobs('in', page);
-        
-        // Fetch from Jooble
-        const joobleJobs = await fetchJoobleJobs(page);
-        
-        allJobs = [...allJobs, ...adzunaJobs, ...joobleJobs];
+        // Fetch from both providers in parallel with error isolation
+        const [adzunaResult, joobleResult] = await Promise.allSettled([
+            fetchAdzunaJobs('in', page),
+            fetchJoobleJobs(page)
+        ]);
+
+        if (adzunaResult.status === 'fulfilled') {
+            allJobs = [...allJobs, ...adzunaResult.value];
+        } else {
+            console.error(`Adzuna failed on page ${page}:`, adzunaResult.reason?.message);
+        }
+
+        if (joobleResult.status === 'fulfilled') {
+            allJobs = [...allJobs, ...joobleResult.value];
+        } else {
+            console.error(`Jooble failed on page ${page}:`, joobleResult.reason?.message);
+        }
         
         // 1-second delay to avoid aggressive rate-limiting
         if (page < MAX_PAGES) {
