@@ -5,24 +5,21 @@ const axiosInstance = axios.create({
   baseURL: BASE_URL,
 });
 
-export const fetchJobs = async () => {
-  const token = localStorage.getItem('ccps-token'); // Retrieve token
+// Fetches ALL jobs in a single request (used by student Applications page).
+// For paginated admin usage, use fetchJobs from jobsApi.js instead.
+export const fetchAllJobs = async () => {
+  const token = localStorage.getItem('ccps-token');
   const headers = {};
   if (token) {
-    // Conditionally add the Authorization header if a token exists
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   try {
-    // Pass headers to the GET request
-    const res = await axiosInstance.get('/api/jobs', { headers }); 
-    
-    // Check if the response data is an array directly, or if it's nested (e.g., res.data.jobs)
+    const res = await axiosInstance.get('/api/jobs?limit=1000', { headers });
     const jobs = Array.isArray(res.data) ? res.data : res.data.jobs || [];
     console.log('Fetched Jobs Data:', jobs);
     return jobs;
   } catch (err) {
-    // A 401 might return a specific error message, which we log
     console.error('Error fetching jobs:', err.response?.data || err.message);
     return [];
   }
@@ -40,9 +37,9 @@ export const fetchMyApplications = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-    
+
     // The backend controller returns onCampusApplications and offCampusApplications
-    return { 
+    return {
       onCampus: res.data.onCampusApplications || [],
       offCampus: res.data.offCampusApplications || [],
     };
@@ -124,3 +121,18 @@ export const fetchSavedApplications = () =>
   axiosInstance
     .get("/api/applications/saved")
     .then((res) => res.data.savedApplications);
+
+export const withdrawApplication = async (jobId) => {
+  const token = localStorage.getItem("ccps-token");
+  try {
+    const res = await axiosInstance.delete(`/api/applications/cancel/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Withdraw Application API error:", err.response?.data || err.message);
+    throw new Error(err.response?.data?.message || 'Failed to withdraw application');
+  }
+};

@@ -1,12 +1,14 @@
 import { toast } from "react-hot-toast";
 import { useEffect, useState } from "react";
 // Ensure fetchAppliedJobs is imported from your API service file
-import { fetchJobs, fetchMyApplications, fetchAppliedJobs } from "../../api/useApply";
+import { fetchAllJobs, fetchMyApplications, fetchAppliedJobs, applyToJob, withdrawApplication } from "../../api/useApply";
 import Sidebar from "../../components/Sidebar";
 import ApplyModal from "../../components/ApplyModel";
 import { saveJob, unsaveJob, fetchSavedApplications } from "../../api/useSavedJobs";
 
 import JobCard from "../../components/JobCard";
+import JobDetailModal from "../../components/JobDetailModal";
+import JobFilter from "../../components/JobFilter";
 
 import { useAuthContext } from "../../context/AuthContext";
 import { getStudentProfile } from "../../api/profile/useStudentProfile";
@@ -27,8 +29,13 @@ const Applications = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [search, setSearch] = useState("");
+  const [filterSource, setFilterSource] = useState("All");
+  const [filterLocation, setFilterLocation] = useState("");
 
   const [activeTab, setActiveTab] = useState("jobs"); // <-- NEW STATE for tab
+  const [offCampusLimit, setOffCampusLimit] = useState(30); // Pagination for external jobs
+  const [externalJobToConfirm, setExternalJobToConfirm] = useState(null); // Tracking external application confirmation
+  const [detailJob, setDetailJob] = useState(null); // Job detail modal
 
   const { authUser } = useAuthContext();
   const [profile, setProfile] = useState(userData);
@@ -37,7 +44,7 @@ const Applications = () => {
   const loadAll = async () => {
     try {
       const [jobList, { onCampus, offCampus }, dedicatedAppliedList, savedList] = await Promise.all([
-        fetchJobs(),
+        fetchAllJobs(),
         fetchMyApplications(),
         fetchAppliedJobs(), // Fetch dedicated applied list
         fetchSavedApplications(), // Fetch saved jobs
@@ -57,7 +64,6 @@ const Applications = () => {
 
   const fetchProfile = () => {
     if (!authUser?._id) return;
-    setLoading(true);
     getStudentProfile(authUser._id)
       .then((data) => {
         setProfile({ ...userData, ...data });
@@ -69,7 +75,7 @@ const Applications = () => {
           phone: authUser.phone,
           address: authUser.address,
         }));
-      }).finally(() => setLoading(false));
+      });
   };
 
   useEffect(() => {
@@ -119,14 +125,77 @@ const Applications = () => {
       toast.error("Failed to update job save status.");
     }
   };
+  
+  const handleExternalApplyClick = (job) => {
+    setExternalJobToConfirm(job);
+  };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.jobTitle.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleExternalAppliedConfirm = async (confirmed) => {
+    if (confirmed && externalJobToConfirm) {
+      try {
+        await applyToJob({
+          jobId: externalJobToConfirm._id,
+          resume: profile.resumeUrl || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+        });
+        toast.success(`Tracked application for ${externalJobToConfirm.jobTitle}`);
+        handleApplied(); // Refresh lists
+      } catch (err) {
+        toast.error(err.message || "Failed to track external application");
+      }
+    }
+    setExternalJobToConfirm(null);
+  };
+
+  const handleWithdraw = async (jobId) => {
+    if (!window.confirm("Are you sure you want to withdraw this application?")) return;
+    try {
+      await withdrawApplication(jobId);
+      toast.success("Application withdrawn successfully");
+      handleApplied(); // Refresh lists
+    } catch (err) {
+      toast.error(err.message || "Failed to withdraw application");
+    }
+  };
+
+  const availableSources = Array.from(new Set(jobs.map(j => j.source || 'Internal'))).filter(Boolean);
+  const availableLocations = Array.from(new Set(jobs.map(j => 
+    j.location || ''
+  ))).filter(Boolean).sort();
+
+  const filteredJobs = jobs.filter((job) => {
+    // 1. Search by Title or Company
+    const searchMatch = 
+      (job.jobTitle && job.jobTitle.toLowerCase().includes(search.toLowerCase())) ||
+      (job.Company && job.Company.toLowerCase().includes(search.toLowerCase()));
+      
+    // 2. Filter by Source
+    const jobSource = job.source || 'Internal';
+    const sourceMatch = filterSource === "All" || jobSource === filterSource;
+    
+    // 3. Filter by Location
+    const jobLoc = job.location || '';
+    const locationMatch = !filterLocation || jobLoc.toLowerCase().includes(filterLocation.toLowerCase());
+
+    return searchMatch && sourceMatch && locationMatch;
+  });
+
+  // Helper to extract the highest numerical salary value from strings like "12.0 LPA" or "6.0-20.0 LPA"
+  const getMaxSalary = (salaryStr) => {
+    if (!salaryStr || salaryStr === "Not Disclosed") return 0;
+    // Extract all numbers (integers or decimals) from the string
+    const numbers = salaryStr.match(/\d+(\.\d+)?/g);
+    if (!numbers) return 0;
+    // Return the maximum number found (so "6.0-20.0" returns 20.0)
+    return Math.max(...numbers.map(Number));
+  };
 
   const grouped = {
     onCampus: filteredJobs.filter((job) => job.Type === "on-campus"),
-    offCampus: filteredJobs.filter((job) => job.Type === "off-campus"),
+    offCampus: filteredJobs
+      .filter((job) => job.Type === "off-campus")
+      .sort((a, b) => getMaxSalary(b.salary) - getMaxSalary(a.salary)),
   };
 
   const renderJobs = (jobsList) =>
@@ -161,6 +230,9 @@ const Applications = () => {
             savedJobs={savedJobs}
             openApplyModal={openApplyModal}
             handleSaveJob={handleSaveJob}
+            onExternalApply={handleExternalApplyClick}
+            onWithdraw={handleWithdraw}
+            onCardClick={setDetailJob}
           />
         ))}
       </div>
@@ -245,6 +317,8 @@ const Applications = () => {
                       myApps={appliedJobsList} // Pass the dedicated list for status check
                       savedJobs={savedJobs}
                       isAppliedJob={true}
+                      onWithdraw={handleWithdraw}
+                      onCardClick={setDetailJob}
                     />
                   ))}
                 </div>
@@ -262,46 +336,19 @@ const Applications = () => {
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 text-lg">Discover your next career adventure</p>
                 </div>
-                <div className="relative w-full lg:w-80">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search job titles..."
-                    className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#13665b] focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 transition-all duration-200"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                    >
-                      <svg
-                        className="h-5 w-5 text-gray-400 hover:text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
               </div>
+
+              {/* Job Filters */}
+              <JobFilter 
+                search={search}
+                setSearch={setSearch}
+                filterSource={filterSource}
+                setFilterSource={setFilterSource}
+                filterLocation={filterLocation}
+                setFilterLocation={setFilterLocation}
+                availableSources={availableSources}
+                availableLocations={availableLocations}
+              />
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -424,7 +471,21 @@ const Applications = () => {
                     </span>
                   </div>
                 </div>
-                {renderJobs(grouped.offCampus)}
+                {renderJobs(grouped.offCampus.slice(0, offCampusLimit))}
+                
+                {grouped.offCampus.length > offCampusLimit && (
+                  <div className="flex justify-center mt-10 pb-12">
+                    <button
+                      onClick={() => setOffCampusLimit(prev => prev + 30)}
+                      className="px-8 py-3 bg-white dark:bg-gray-800 border border-gray-900 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm flex items-center space-x-2"
+                    >
+                      <span>Show More Off-Campus Jobs</span>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </section>
             </div>
           </>
@@ -439,6 +500,54 @@ const Applications = () => {
           onClose={() => setIsModalOpen(false)}
           onApplied={handleApplied}
         />
+      )}
+
+      {externalJobToConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">Application Feedback</h3>
+              <p className="text-blue-100 text-sm">Help us track your progress</p>
+            </div>
+            
+            <div className="p-8 text-center">
+              <p className="text-gray-700 dark:text-gray-200 text-lg font-medium mb-6">
+                Did you complete your application for <span className="text-blue-600 dark:text-blue-400 font-bold">{externalJobToConfirm.jobTitle}</span> at {externalJobToConfirm.Company}?
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleExternalAppliedConfirm(false)}
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+                >
+                  No, not yet
+                </button>
+                <button
+                  onClick={() => handleExternalAppliedConfirm(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-none hover:shadow-blue-300 hover:scale-[1.02] transition-all active:scale-95"
+                >
+                  Yes, I applied!
+                </button>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setExternalJobToConfirm(null)}
+              className="w-full py-4 text-gray-400 dark:text-gray-500 text-xs hover:text-gray-600 dark:hover:text-gray-400 transition-colors border-t border-gray-100 dark:border-gray-700"
+            >
+              I'll answer this later
+            </button>
+          </div>
+        </div>
+      )}
+
+      {detailJob && (
+        <JobDetailModal job={detailJob} onClose={() => setDetailJob(null)} />
       )}
     </div>
   );

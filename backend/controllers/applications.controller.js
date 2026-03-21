@@ -87,9 +87,9 @@ export const applyToJob = async (req, res) => {
     const application = new JobApplication({
       studentId,
       jobId,
-      resumeUrl,
-      phoneNumber,
-      userAddress,
+      resume: resumeUrl,
+      phone: phoneNumber,
+      address: userAddress,
       status: "applied"
     });
     await application.save();

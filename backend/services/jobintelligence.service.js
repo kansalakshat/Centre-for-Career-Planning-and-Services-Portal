@@ -73,7 +73,7 @@ export const getIntelligentFeed = async (user, queryParams) => {
         Number.isNaN(limitNum) ||
         pageNum < 1 ||
         limitNum < 1 ||
-        limitNum > 50
+        limitNum > 1000
     ) {
         throw new Error("Invalid pagination values");
     }

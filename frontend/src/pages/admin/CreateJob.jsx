@@ -129,7 +129,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="Company"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Company Name
                 </label>
@@ -142,9 +142,9 @@ const CreateJob = () => {
                   onChange={handleChange}
                   placeholder="e.g. Acme Corp"
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -156,7 +156,7 @@ const CreateJob = () => {
             <div>
               <label
                 htmlFor="jobDescription"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Job Description
               </label>
@@ -183,7 +183,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="requiredSkills"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Required Skills
                 </label>
@@ -195,9 +195,9 @@ const CreateJob = () => {
                   onChange={handleChange}
                   placeholder="e.g. React, Node.js"
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -207,7 +207,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="Type"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Job Type
                 </label>
@@ -218,9 +218,9 @@ const CreateJob = () => {
                   value={form.Type}
                   onChange={handleChange}
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -236,7 +236,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="batch"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Eligible Batch
                 </label>
@@ -249,9 +249,9 @@ const CreateJob = () => {
                   onChange={handleChange}
                   placeholder="e.g. 2025"
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -261,7 +261,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="relevanceScore"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Relevance Score
                 </label>
@@ -274,9 +274,9 @@ const CreateJob = () => {
                   onChange={handleChange}
                   placeholder="Optional"
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -289,7 +289,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="Deadline"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Application Deadline
                 </label>
@@ -300,9 +300,9 @@ const CreateJob = () => {
                   value={form.Deadline}
                   onChange={handleChange}
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -312,7 +312,7 @@ const CreateJob = () => {
               <div>
                 <label
                   htmlFor="Expiry"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Post Expiry Date
                 </label>
@@ -323,9 +323,9 @@ const CreateJob = () => {
                   value={form.Expiry}
                   onChange={handleChange}
                   className="
-                    w-full border border-gray-300 rounded-lg 
-                    px-4 py-2 text-gray-900 
-                    shadow-sm 
+                    w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                    px-4 py-2 text-gray-900 dark:text-white
+                    shadow-sm dark:bg-gray-700
                     focus:outline-none 
                     focus:ring-2 focus:ring-green-600 focus:border-green-600
                     transition
@@ -337,7 +337,7 @@ const CreateJob = () => {
             <div>
               <label
                 htmlFor="ApplicationLink"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Application Link (optional)
               </label>
@@ -349,9 +349,9 @@ const CreateJob = () => {
                 onChange={handleChange}
                 placeholder="https://apply.here"
                 className="
-                  w-full border border-gray-300 rounded-lg 
-                  px-4 py-2 text-gray-900 
-                  shadow-sm 
+                  w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                  px-4 py-2 text-gray-900 dark:text-white
+                  shadow-sm dark:bg-gray-700
                   focus:outline-none 
                   focus:ring-2 focus:ring-green-600 focus:border-green-600
                   transition
@@ -362,7 +362,7 @@ const CreateJob = () => {
             <div>
               <label
                 htmlFor="author"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 Author (optional)
               </label>
@@ -374,9 +374,9 @@ const CreateJob = () => {
                 onChange={handleChange}
                 placeholder="Your name"
                 className="
-                  w-full border border-gray-300 rounded-lg 
-                  px-4 py-2 text-gray-900 
-                  shadow-sm 
+                  w-full border border-gray-300 dark:border-gray-600 rounded-lg 
+                  px-4 py-2 text-gray-900 dark:text-white
+                  shadow-sm dark:bg-gray-700
                   focus:outline-none 
                   focus:ring-2 focus:ring-green-600 focus:border-green-600
                   transition
