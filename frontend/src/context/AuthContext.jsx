@@ -8,11 +8,13 @@ export const AuthContextProvider = ({ children }) => {
   const [tempUserId, setTempUserId] = useState("");
   const [authUser, setAuthUser] = useState(() => {
     const raw = localStorage.getItem("ccps-user");
-    if (!raw) return null;
+    const token = localStorage.getItem("ccps-token");
+    
+    if (!raw || !token) return null;
     try {
       const parsed = JSON.parse(raw);
       if (parsed.userData) {
-        return { ...parsed.userData, token: parsed.token };
+        return { ...parsed.userData, token: parsed.token || token };
       }
       return parsed;
     } catch {

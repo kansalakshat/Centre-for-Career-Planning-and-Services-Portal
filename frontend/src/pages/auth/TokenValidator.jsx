@@ -1,13 +1,20 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {jwtDecode} from "jwt-decode";
 
 const TokenValidator = () => {
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         const checkTokenValidity = () => {
             const token = localStorage.getItem("ccps-token");
+            const publicPaths = ["/", "/login", "/signup"];
+
+            // If user is on a public page, don't force login redirect
+            if (publicPaths.includes(location.pathname)) {
+                return;
+            }
 
             if(!token){
                 navigate("/login");
@@ -29,8 +36,9 @@ const TokenValidator = () => {
             }
         }
         checkTokenValidity();
-    },[])
+    }, [location.pathname, navigate]);
 
+    return null;
 }
 
-export default TokenValidator
+export default TokenValidator;
