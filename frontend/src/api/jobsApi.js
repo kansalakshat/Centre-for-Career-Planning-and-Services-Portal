@@ -1,5 +1,6 @@
-import axios from 'axios';
+// frontend/src/api/jobsApi.js
 
+// 1. Define the Backend Root URL and the Base API URL
 const BACKEND_ROOT = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 // This logic ensures BASE_URL is the root API path, e.g., 'http://localhost:3000/api'
@@ -48,13 +49,9 @@ export const updateJobPosting = async (jobId, jobData, token) => {
  * @param {string} token - The authorization token.
  * @returns {Promise<object>} The response data from the server.
  */
-export const fetchJobs = async (token, page = 1, limit = 15, search = "") => {
-    // Admin uses the legacy endpoint with applicationCount sorting
-    let url = `${JOBS_ENDPOINT}/admin?page=${page}&limit=${limit}`;
-    if (search) {
-        url += `&search=${encodeURIComponent(search)}`;
-    }
-    const response = await fetch(url, { 
+export const fetchJobs = async (token) => {
+    // 🔑 Fix: Use the correct, full endpoint: /api/jobs
+    const response = await fetch(JOBS_ENDPOINT, { 
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -70,37 +67,55 @@ export const fetchJobs = async (token, page = 1, limit = 15, search = "") => {
         throw new Error(errorData.message || `Failed to fetch jobs (Status: ${response.status})`);
     }
 
-export const updateJobPosting = async (jobId, jobData, token) => {
-  const { data } = await axios.put(`${BASE_URL}/jobs/${jobId}`, jobData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data.job;
+    // Assuming your jobList controller returns an object like { message: ..., jobs: [...] }
+    return response.json();
 };
 
+/**
+ * Deletes a job posting by its ID.
+ * @param {string} jobId - The ID of the job to delete.
+ * @param {string} token - The authorization token.
+ * @returns {Promise<object>} The response data from the server.
+ */
 export const deleteJob = async (jobId, token) => {
-  const { data } = await axios.delete(`${BASE_URL}/jobs/${jobId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data;
+    // 🔑 Use the correct endpoint for deletion: /api/jobs/:id
+    const response = await fetch(`${JOBS_ENDPOINT}/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            // Crucial: Pass the authentication token
+            'Authorization': `Bearer ${token}`, 
+        },
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Server did not return JSON.' }));
+        throw new Error(errorData.message || `Failed to delete job (Status: ${response.status})`);
+    }
+
+    return response.json();
 };
 
+// You should also have a create function for completeness and consistency
+/**
+ * Creates a new job posting.
+ * @param {object} jobData - The job form data.
+ * @param {string} token - The authorization token.
+ * @returns {Promise<object>} The created job data.
+ */
 export const createJobPosting = async (jobData, token) => {
-  const { data } = await axios.post(`${BASE_URL}/jobs`, jobData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data;
-};
+    const response = await fetch(JOBS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(jobData),
+    });
 
-export const upvoteJob = async (jobId, token) => {
-  const { data } = await axios.post(`${BASE_URL}/jobs/upvote/${jobId}`, {}, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data;
-};
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Server did not return JSON.' }));
+        throw new Error(errorData.message || `Failed to create job (Status: ${response.status})`);
+    }
 
-export const downvoteJob = async (jobId, token) => {
-  const { data } = await axios.post(`${BASE_URL}/jobs/downvote/${jobId}`, {}, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data;
+    return response.json();
 };
