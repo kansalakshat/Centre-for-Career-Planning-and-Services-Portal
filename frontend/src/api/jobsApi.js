@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const BACKEND_ROOT = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-const BASE_URL = BACKEND_ROOT.replace(/\/$/, '') + '/api';
 
 // This logic ensures BASE_URL is the root API path, e.g., 'http://localhost:3000/api'
 const BASE_URL = BACKEND_ROOT.endsWith('/api')
