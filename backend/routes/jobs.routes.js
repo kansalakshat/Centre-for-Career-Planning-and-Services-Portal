@@ -2,16 +2,27 @@ import express from "express";
 import { jobCreate,jobUpdate,jobRelevanceScoreUpvote,jobRelevanceScoreDownvote,jobDelete,jobList,jobListLegacy } from "../controllers/jobs.controllers.js";
 import { protectRoute, authorizeRoles } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { createJobSchema } from "../validators/job.validator.js";
+import { createJobSchema, updateJobSchema } from "../validators/job.validator.js";
+import { objectIdSchema } from "../validators/common.validator.js";
+import { z } from "zod";
 
 const router = express.Router();
 
+const paramIdSchema = z.object({
+  params: z.object({
+    id: objectIdSchema,
+  }),
+});
+
 router.post("/", protectRoute, authorizeRoles("admin"), validate(createJobSchema), jobCreate);
-router.put("/:id", protectRoute, authorizeRoles("admin"), jobUpdate);
-router.delete("/:id", protectRoute, authorizeRoles("admin"), jobDelete);
+router.put("/:id", protectRoute, authorizeRoles("admin"), validate(updateJobSchema), jobUpdate);
+router.delete("/:id", protectRoute, authorizeRoles("admin"), validate(paramIdSchema), jobDelete);
 router.get('/', protectRoute, jobList);
+
+router.post('/upvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreUpvote);
+router.post('/downvote/:id', protectRoute, validate(paramIdSchema), jobRelevanceScoreDownvote);
+
 router.get('/admin', protectRoute, authorizeRoles("admin"), jobListLegacy);
-router.get('/upvote/:id', protectRoute, jobRelevanceScoreUpvote);
-router.get('/downvote/:id', protectRoute, jobRelevanceScoreDownvote);
+
 
 export default router;

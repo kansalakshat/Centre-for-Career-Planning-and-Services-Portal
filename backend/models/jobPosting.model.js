@@ -47,6 +47,7 @@ const jobPostingSchema = new mongoose.Schema({
     },
     relevanceScore: {
         type: Number,
+        default: 0,
     },
     upvotedBy: [{
         type: mongoose.Schema.Types.ObjectId,

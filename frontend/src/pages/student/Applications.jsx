@@ -1,5 +1,6 @@
 import { toast } from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 // Ensure fetchAppliedJobs is imported from your API service file
 import { fetchAllJobs, fetchMyApplications, fetchAppliedJobs, applyToJob, withdrawApplication } from "../../api/useApply";
 import Sidebar from "../../components/Sidebar";
@@ -21,11 +22,9 @@ const userData = {
 
 
 const Applications = () => {
-  const [jobs, setJobs] = useState([]);
-  const [myApps, setMyApps] = useState([]);
-  const [savedJobs, setSavedJobs] = useState([]); // NEW STATE
-  const [appliedJobsList, setAppliedJobsList] = useState([]); // NEW STATE
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { authUser } = useAuthContext();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [search, setSearch] = useState("");
@@ -37,9 +36,20 @@ const Applications = () => {
   const [externalJobToConfirm, setExternalJobToConfirm] = useState(null); // Tracking external application confirmation
   const [detailJob, setDetailJob] = useState(null); // Job detail modal
 
-  const { authUser } = useAuthContext();
-  const [profile, setProfile] = useState(userData);
+  // 2. Applications Query
+  const { data: appsData = { onCampus: [], offCampus: [] }, isLoading: appsLoading } = useQuery({
+    queryKey: ['applications'],
+    queryFn: fetchMyApplications,
+    enabled: !!authUser,
+  });
+  const myApps = [...appsData.onCampus, ...appsData.offCampus];
 
+  // 3. Dedicated Applied List Query
+  const { data: appliedJobsList = [], isLoading: appliedLoading } = useQuery({
+    queryKey: ['appliedJobs'],
+    queryFn: fetchAppliedJobs,
+    enabled: !!authUser,
+  });
 
   const loadAll = async () => {
     try {
@@ -78,9 +88,7 @@ const Applications = () => {
       });
   };
 
-  useEffect(() => {
-    loadAll();
-  }, []);
+  const loading = jobsLoading || appsLoading || appliedLoading || savedLoading || profileLoading;
 
   const openApplyModal = (job) => {
     setSelectedJob(job);
@@ -88,38 +96,25 @@ const Applications = () => {
   };
 
   const handleApplied = async () => {
-    try {
-      // Refresh both application lists for automatic update
-      const [{ onCampus, offCampus }, dedicatedAppliedList] = await Promise.all([
-        fetchMyApplications(),
-        fetchAppliedJobs(),
-      ]);
-      setMyApps([...onCampus, ...offCampus]);
-      setAppliedJobsList(dedicatedAppliedList);
-      toast.success("Application submitted and list updated!");
-    } catch (err) {
-      console.error("Error refreshing applications:", err);
-    }
+    // Invalidate queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ['applications'] });
+    queryClient.invalidateQueries({ queryKey: ['appliedJobs'] });
+    toast.success("Application submitted and list updated!");
   };
 
   const handleSaveJob = async (jobId) => {
     try {
-      const isAlreadySaved = savedJobs.some(s => s.jobId._id === jobId || s.jobId === jobId);
+      const isAlreadySaved = savedJobs.some(s => (s.jobId?._id || s.jobId) === jobId);
 
       if (isAlreadySaved) {
         await unsaveJob(jobId);
         toast.success("Job unsaved!");
-        setSavedJobs(prev => prev.filter(s => (s.jobId._id || s.jobId) !== jobId));
       } else {
         await saveJob(jobId);
         toast.success("Job saved!");
-        // We might want to re-fetch or optimistically update. 
-        // For simplicity, let's just re-fetch saved jobs to be sure we have the full object if needed, 
-        // or just append a placeholder if structure allows.
-        // Let's re-fetch for now to be safe.
-        const updatedSaved = await fetchSavedApplications();
-        setSavedJobs(updatedSaved);
       }
+      // Refresh saved jobs list
+      queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
     } catch (err) {
       console.error(err);
       toast.error("Failed to update job save status.");

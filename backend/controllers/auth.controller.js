@@ -11,7 +11,7 @@ dotenv.config();
 
 export const signup = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, phone, address } = req.body;
 
         if (role === "student" || role === "admin") {
             if (!email.endsWith("@iitbhilai.ac.in")) {
@@ -58,6 +58,8 @@ export const signup = async (req, res) => {
             user.name = name;
             user.role = role;
             user.password = hashedPassword;
+            user.phone = phone || user.phone;
+            user.address = address || user.address;
             user.verificationToken = verificationToken;
             user.verificationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000;
 
@@ -84,6 +86,8 @@ export const signup = async (req, res) => {
             email,
             role,
             password: hashedPassword,
+            phone,
+            address,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 1 * 60 * 60 * 1000  // 1 hour
         }
