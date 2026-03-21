@@ -8,6 +8,11 @@ const JobManagementPage = () => {
     const [jobs, setJobs] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [jobToEdit, setJobToEdit] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [totalJobsCount, setTotalJobsCount] = useState(0);
+    const [searchTerm, setSearchTerm] = useState("");
+    const LIMIT = 15;
 
     const getAdminToken = useCallback(() => {
         const userString = localStorage.getItem('ccps-user');
@@ -24,7 +29,7 @@ const JobManagementPage = () => {
         }
         return tokenFromTokenKey;
     }, []);
-    const loadJobs = useCallback(async () => {
+    const loadJobs = useCallback(async (pageToLoad = 1, currentSearch = "") => {
         const token = getAdminToken();
 
         if (!token) {
@@ -33,8 +38,24 @@ const JobManagementPage = () => {
         }
 
         try {
-            const data = await fetchJobs(token);
-            setJobs(data.jobs || []);
+            const data = await fetchJobs(token, pageToLoad, LIMIT, currentSearch);
+            const newJobs = data.jobs || [];
+            
+            if (data.totalJobs !== undefined) {
+                setTotalJobsCount(data.totalJobs);
+            }
+
+            if (pageToLoad === 1) {
+                setJobs(newJobs);
+            } else {
+                setJobs(prevJobs => [...prevJobs, ...newJobs]);
+            }
+            
+            if (newJobs.length < LIMIT) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
         } catch (err) {
             console.error('Failed to load jobs:', err.message);
             toast.error('Failed to load jobs: ' + err.message);
@@ -42,8 +63,29 @@ const JobManagementPage = () => {
     }, [getAdminToken]);
 
     useEffect(() => {
-        loadJobs();
-    }, [loadJobs]);
+        loadJobs(1, searchTerm);
+    }, [loadJobs]); // Initial load
+
+    const isFirstRender = React.useRef(true);
+
+    // Debounce the search input so it doesn't slam the API every keystroke
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const delaySearch = setTimeout(() => {
+            setCurrentPage(1);
+            loadJobs(1, searchTerm);
+        }, 500);
+        return () => clearTimeout(delaySearch);
+    }, [searchTerm, loadJobs]);
+
+    const handleLoadMore = () => {
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        loadJobs(nextPage, searchTerm);
+    };
 
     const handleEditClick = (job) => {
         setJobToEdit(job);
@@ -109,17 +151,28 @@ const JobManagementPage = () => {
             )}
 
             <main className="flex-1 p-6 pt-20 md:pt-8 w-full">
-                <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <div className="max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
 
                     {/* Header */}
                     <div className="bg-[#0c4a42] p-6 flex justify-between items-center">
                         <div>
                             <h1 className="text-2xl font-bold text-white">Job Management Portal</h1>
-                            <p className="text-green-300 mt-1">Review and manage all active job postings</p>
+                            <p className="text-green-300 mt-1">Review and manage all active job postings ({totalJobsCount} total jobs)</p>
                         </div>
                     </div>
 
                     <div className="p-6">
+                        {/* Search Bar */}
+                        <div className="mb-6">
+                            <input
+                                type="text"
+                                placeholder="Search by Job Title or Company..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#0c4a42] focus:border-transparent transition-all shadow-sm"
+                            />
+                        </div>
+
                         <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
                             {jobs.length === 0 ? (
                                 <p className="p-4 text-center text-gray-500 dark:text-gray-400">No jobs currently posted.</p>
@@ -160,6 +213,17 @@ const JobManagementPage = () => {
                                 </table>
                             )}
                         </div>
+                        
+                        {hasMore && jobs.length > 0 && (
+                            <div className="mt-6 flex justify-center">
+                                <button
+                                    onClick={handleLoadMore}
+                                    className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg shadow-sm transition duration-150"
+                                >
+                                    Show More
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

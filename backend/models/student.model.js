@@ -61,6 +61,11 @@ const studentSchema = new mongoose.Schema({
     required: true
   },
 
+  skills: {
+    type: [String],
+    default: []
+  },
+  
   SavedJobs: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'JobPosting',

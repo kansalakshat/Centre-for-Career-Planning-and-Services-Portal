@@ -24,10 +24,26 @@ function Signup() {
     password: '',
     confirmPassword: '',
     role: '',
+    instituteId: '',
+    mobileNumber: '',
+    batch: '',
+    company: '',
+    linkedin: '',
   });
   const { loading, signup } = useSignup();
   const [showPassword, setShowPassword] = useState(false);
-  const handleChange = (key, value) => setInputs({ ...inputs, [key]: value });
+  const handleChange = (key, value) => {
+    const updated = { ...inputs, [key]: value };
+    // Clear alumni-specific fields when switching away from alumni
+    if (key === 'role' && value !== 'alumni') {
+      updated.instituteId = '';
+      updated.mobileNumber = '';
+      updated.batch = '';
+      updated.company = '';
+      updated.linkedin = '';
+    }
+    setInputs(updated);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,7 +81,7 @@ function Signup() {
             <input
               type="email"
               autoComplete="email"
-              placeholder="example@iitbhilai.ac.in"
+              placeholder={inputs.role === 'alumni' ? 'your.email@example.com' : 'example@iitbhilai.ac.in'}
               className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white transition placeholder-gray-400"
               value={inputs.email}
               onChange={e => handleChange('email', e.target.value)}
@@ -129,8 +145,70 @@ function Signup() {
               <option value="student">Student</option>
               <option value="recruiter">Recruiter</option>
               <option value="admin">Admin</option>
+              <option value="alumni">Alumni</option>
             </select>
           </div>
+          {/* Alumni-specific fields */}
+          {inputs.role === 'alumni' && (
+            <div className="space-y-4 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Alumni Details</p>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-800">Institute ID <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g. 11940070"
+                  className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-white transition placeholder-gray-400"
+                  value={inputs.instituteId}
+                  onChange={e => handleChange('instituteId', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-800">Mobile Number <span className="text-red-500">*</span></label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-white transition placeholder-gray-400"
+                  value={inputs.mobileNumber}
+                  onChange={e => handleChange('mobileNumber', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-800">Graduation Batch <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  placeholder="e.g. 2023"
+                  min="2000"
+                  max="2099"
+                  className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-white transition placeholder-gray-400"
+                  value={inputs.batch}
+                  onChange={e => handleChange('batch', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-800">Company <span className="text-gray-400 text-xs font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g. Google"
+                  className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-white transition placeholder-gray-400"
+                  value={inputs.company}
+                  onChange={e => handleChange('company', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold text-gray-800">LinkedIn <span className="text-gray-400 text-xs font-normal">(optional)</span></label>
+                <input
+                  type="url"
+                  placeholder="https://linkedin.com/in/yourprofile"
+                  className="w-full border border-gray-300 focus:border-emerald-500 rounded-lg px-3 py-2 bg-white transition placeholder-gray-400"
+                  value={inputs.linkedin}
+                  onChange={e => handleChange('linkedin', e.target.value)}
+                />
+              </div>
+            </div>
+          )}
           {/* Submit */}
           <button
             type="submit"
@@ -151,3 +229,4 @@ function Signup() {
   );
 }
 export default Signup;
+

@@ -39,6 +39,28 @@ const userSchema = new mongoose.Schema({
     address: {
         type: String,
         default: ''
+    },
+    batch: {
+        type: Number,
+        required: false
+    },
+    skills: {
+        type: [String],
+        default: []
+    },
+    privacySettings: {
+        allowMessages: {
+            type: Boolean,
+            default: true
+        },
+        departmentOnly: {
+            type: Boolean,
+            default: false
+        }
+    },
+    pendingAlumniData: {
+        type: Object,
+        default: undefined
     }
 })
 

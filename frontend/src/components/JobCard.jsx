@@ -3,191 +3,19 @@ import { useAuthContext } from '../context/AuthContext';
 import { upvoteJob, downvoteJob } from '../api/jobsApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, savedJobs = [] }) => {
-    const { authUser } = useAuthContext();
-    const queryClient = useQueryClient();
+const WithdrawButton = ({ onWithdraw, jobId }) => (
+    <button
+        onClick={() => onWithdraw(jobId)}
+        className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-all border border-red-200 dark:border-red-800"
+    >
+        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        Withdraw
+    </button>
+);
 
-    const relevanceScore = job.relevanceScore || 0;
-
-    // Determine initial vote status from job data
-    const voteStatus = job.upvotedBy?.some(voterId => 
-        (typeof voterId === 'object' ? voterId._id : voterId) === authUser?._id
-    ) ? 'up' : job.downvotedBy?.some(voterId => 
-        (typeof voterId === 'object' ? voterId._id : voterId) === authUser?._id
-    ) ? 'down' : null;
-
-    const upvoteMutation = useMutation({
-        mutationFn: () => upvoteJob(job._id, localStorage.getItem("ccps-token")),
-        onMutate: async () => {
-            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-            await queryClient.cancelQueries({ queryKey: ['jobs'] });
-
-            // Snapshot the previous value
-            const previousJobs = queryClient.getQueryData(['jobs']);
-
-            // Calculate the score change based on current vote status
-            let scoreChange = 0;
-            if (voteStatus === 'up') {
-                scoreChange = -1; // Toggle off
-            } else if (voteStatus === 'down') {
-                scoreChange = 2; // Switch from down to up
-            } else {
-                scoreChange = 1; // Neutral to up
-            }
-
-            // Optimistically update to the new value
-            queryClient.setQueryData(['jobs'], (old) => {
-                if (!old) return old;
-
-                // Handle both array and nested object structure
-                const updateJobInList = (jobsList) => 
-                    jobsList.map((j) => {
-                        if (j._id !== job._id) return j;
-
-                        let newUpvotedBy = [...(j.upvotedBy || [])];
-                        let newDownvotedBy = [...(j.downvotedBy || [])];
-                        
-                        const userId = authUser?._id;
-                        const checkId = (id) => (typeof id === 'object' ? id._id : id);
-
-                        if (voteStatus === 'up') {
-                            newUpvotedBy = newUpvotedBy.filter(id => checkId(id) !== userId);
-                        } else if (voteStatus === 'down') {
-                            newDownvotedBy = newDownvotedBy.filter(id => checkId(id) !== userId);
-                            newUpvotedBy.push(userId);
-                        } else {
-                            newUpvotedBy.push(userId);
-                        }
-
-                        return { 
-                            ...j, 
-                            relevanceScore: (j.relevanceScore || 0) + scoreChange,
-                            upvotedBy: newUpvotedBy,
-                            downvotedBy: newDownvotedBy
-                        };
-                    });
-
-                if (Array.isArray(old)) {
-                    return updateJobInList(old);
-                } else if (old.jobs && Array.isArray(old.jobs)) {
-                    return {
-                        ...old,
-                        jobs: updateJobInList(old.jobs)
-                    };
-                }
-                return old;
-            });
-
-            // Return a context object with the snapshotted value
-            return { previousJobs };
-        },
-        onError: (err, newVote, context) => {
-            // If the mutation fails, use the context returned from onMutate to roll back
-            if (context?.previousJobs) {
-                queryClient.setQueryData(['jobs'], context.previousJobs);
-            }
-            console.error("Failed to upvote:", err);
-        },
-        onSettled: () => {
-            // Always refetch after error or success to keep server and client in sync
-            queryClient.invalidateQueries({ queryKey: ['jobs'] });
-        }
-    });
-
-    const downvoteMutation = useMutation({
-        mutationFn: () => downvoteJob(job._id, localStorage.getItem("ccps-token")),
-        onMutate: async () => {
-            // Cancel any outgoing refetches
-            await queryClient.cancelQueries({ queryKey: ['jobs'] });
-
-            // Snapshot the previous value
-            const previousJobs = queryClient.getQueryData(['jobs']);
-
-            // Calculate the score change based on current vote status
-            let scoreChange = 0;
-            if (voteStatus === 'down') {
-                scoreChange = 1; // Toggle off
-            } else if (voteStatus === 'up') {
-                scoreChange = -2; // Switch from up to down
-            } else {
-                scoreChange = -1; // Neutral to down
-            }
-
-            // Optimistically update to the new value
-            queryClient.setQueryData(['jobs'], (old) => {
-                if (!old) return old;
-
-                // Handle both array and nested object structure
-                const updateJobInList = (jobsList) => 
-                    jobsList.map((j) => {
-                        if (j._id !== job._id) return j;
-
-                        let newUpvotedBy = [...(j.upvotedBy || [])];
-                        let newDownvotedBy = [...(j.downvotedBy || [])];
-                        
-                        const userId = authUser?._id;
-                        const checkId = (id) => (typeof id === 'object' ? id._id : id);
-
-                        if (voteStatus === 'down') {
-                            newDownvotedBy = newDownvotedBy.filter(id => checkId(id) !== userId);
-                        } else if (voteStatus === 'up') {
-                            newUpvotedBy = newUpvotedBy.filter(id => checkId(id) !== userId);
-                            newDownvotedBy.push(userId);
-                        } else {
-                            newDownvotedBy.push(userId);
-                        }
-
-                        return { 
-                            ...j, 
-                            relevanceScore: (j.relevanceScore || 0) + scoreChange,
-                            upvotedBy: newUpvotedBy,
-                            downvotedBy: newDownvotedBy
-                        };
-                    });
-
-                if (Array.isArray(old)) {
-                    return updateJobInList(old);
-                } else if (old.jobs && Array.isArray(old.jobs)) {
-                    return {
-                        ...old,
-                        jobs: updateJobInList(old.jobs)
-                    };
-                }
-                return old;
-            });
-
-            // Return a context object with the snapshotted value
-            return { previousJobs };
-        },
-        onError: (err, newVote, context) => {
-            // If the mutation fails, roll back
-            if (context?.previousJobs) {
-                queryClient.setQueryData(['jobs'], context.previousJobs);
-            }
-            console.error("Failed to downvote:", err);
-        },
-        onSettled: () => {
-            // Always refetch
-            queryClient.invalidateQueries({ queryKey: ['jobs'] });
-        }
-    });
-
-    const handleUpvote = () => {
-        if (!authUser) {
-            alert("Please login to vote");
-            return;
-        }
-        upvoteMutation.mutate();
-    };
-
-    const handleDownvote = () => {
-        if (!authUser) {
-            alert("Please login to vote");
-            return;
-        }
-        downvoteMutation.mutate();
-    };
-
+const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, onExternalApply, onWithdraw, onCardClick, isAppliedJob, savedJobs = [] }) => {
     const application = isAppliedJob ? null : myApps?.find((a) => {
         const applicationJobId = typeof a.jobId === 'object' && a.jobId !== null
             ? a.jobId._id
@@ -224,7 +52,8 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
     return (
         <div
             key={job._id}
-            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+            className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-blue-50 dark:hover:shadow-gray-900/10 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden cursor-pointer"
+            onClick={() => onCardClick && onCardClick(job)}
         >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-transparent to-indigo-50/0 group-hover:from-blue-50/30 group-hover:to-indigo-50/30 transition-all duration-300 rounded-2xl"></div>
 
@@ -235,6 +64,14 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                     <div className={`w-2 h-2 rounded-full mr-2 ${typeDotClass}`}></div>
                     {job.Type}
                 </span>
+                {job.salary && job.salary !== "Not Disclosed" && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {job.salary}
+                    </span>
+                )}
             </div>
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-[#0c4a42] dark:group-hover:text-emerald-300 transition-colors duration-200 relative z-10 line-clamp-2">
@@ -259,7 +96,9 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                 </div>
                 <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.Company}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Company</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {job.location || 'Location not specified'}
+                    </p>
                 </div>
             </div>
 
@@ -267,32 +106,69 @@ const JobCard = ({ job, myApps, openApplyModal, handleSaveJob, isAppliedJob, sav
                 {job.jobDescription}
             </p>
 
+            {isAppliedJob && (
+                <div onClick={(e) => e.stopPropagation()} className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
+                    <div className="flex items-center gap-2">
+                        <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
+                        >
+                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
+                            {status || 'Pending'}
+                        </span>
+                        {onWithdraw && <WithdrawButton onWithdraw={onWithdraw} jobId={job._id} />}
+                    </div>
+                </div>
+            )}
+
             {!isAppliedJob && (
-                <div className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
+                <div onClick={(e) => e.stopPropagation()} className={`flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 relative z-10`}>
                     <div className="flex flex-col">
                         {applied ? (
-                            <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
-                            >
-                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
-                                {status || 'Pending'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${statusBgClass}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${statusDotClass}`}></div>
+                                    {status || 'Pending'}
+                                </span>
+                                {onWithdraw && <WithdrawButton onWithdraw={onWithdraw} jobId={job._id} />}
+                            </div>
                         ) : (
                             <div className="flex gap-2">
-                                <button
-                                    onClick={() => openApplyModal(job)}
-                                    className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
-                                >
-                                    <svg
-                                        className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform duration-200"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                {job.isScraped ? (
+                                    <button
+                                        onClick={() => {
+                                            window.open(job.originalLink, '_blank', 'noopener,noreferrer');
+                                            onExternalApply?.(job);
+                                        }}
+                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Apply Now
-                                </button>
+                                        <svg
+                                            className="w-4 h-4 mr-2 group-hover/btn:translate-x-1 transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        Apply on {job.source || 'External'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => openApplyModal(job)}
+                                        className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group/btn"
+                                    >
+                                        <svg
+                                            className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform duration-200"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Apply Now
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => handleSaveJob(job._id)}
                                     className={`inline-flex items-center px-4 py-2.5 text-white text-sm font-semibold rounded-xl shadow-lg transition-all duration-200 ${isSaved

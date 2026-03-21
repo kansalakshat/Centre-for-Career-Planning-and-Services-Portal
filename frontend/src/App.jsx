@@ -1,4 +1,3 @@
-import React from 'react';
 import './index.css';
 
 import { Toaster } from 'react-hot-toast'
@@ -35,6 +34,9 @@ import CreateJob from './pages/admin/CreateJob';
 import AdminJobList from './pages/admin/AdminJobList';
 import JobApplicants from './pages/admin/JobApplications';
 import JobManagementPage from './pages/admin/JobManagementPage';
+import ChatPage from './pages/ChatPage';
+import IncomingRequests from './pages/IncomingRequests';
+import Connections from './pages/Connections';
 
 
 function App() {
@@ -61,6 +63,9 @@ function App() {
         <Route path='/referrals' element={<Referrals />} />
         <Route path='/resumebuilder' element={<ResumeBuilder />} />
         <Route path='/alumni' element={<Alumni />} />
+        <Route path="/chat/:receiverId" element={authUser ? <ChatPage /> : <Navigate to='/login' />} />
+        <Route path="/alumni/requests" element={authUser?.role === "alumni" ? <IncomingRequests /> : <Navigate to="/" />} />
+        <Route path="/alumni/connections" element={authUser?.role === "alumni" ? <Connections /> : <Navigate to="/" />} />
         {!authUser && <Route path='/reset-password/:resetToken' element={<ResetPasswordPage />} />}
         <Route
           path="/admin/jobs"
