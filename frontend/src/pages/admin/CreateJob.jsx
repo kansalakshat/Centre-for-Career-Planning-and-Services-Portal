@@ -1,8 +1,25 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { createJobPosting } from "../../api/useCreate";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Sidebar from "../../components/Sidebar";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+
+// Zod schema for job creation form
+const createJobSchema = z.object({
+  jobTitle: z.string().min(1, "Job title is required"),
+  jobDescription: z.string().min(1, "Job description is required"),
+  Company: z.string().min(1, "Company name is required"),
+  requiredSkills: z.string().optional(),
+  Type: z.enum(["on-campus", "off-campus"]),
+  batch: z.string().min(1, "Eligible batch is required"),
+  Deadline: z.string().optional(),
+  ApplicationLink: z.string().url("Invalid URL").optional().or(z.literal("")),
+  Expiry: z.string().optional(),
+  author: z.string().optional(),
+  relevanceScore: z.string().optional(),
+});
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -19,49 +36,10 @@ const CreateJob = () => {
     author: "",
     relevanceScore: "",
   });
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Get today's date at start of day (midnight)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Parse deadlines if present (they can be empty strings)
-    const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
-    const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
-
-    // Check deadline date validity
-    if (deadlineDate && deadlineDate < today) {
-      toast.error("Application Deadline cannot be before today's date.");
-      setSubmitting(false);
-      return;
-    }
-
-    // Check expiry date validity
-    if (expiryDate && expiryDate < today) {
-      toast.error("Post Expiry Date cannot be before today's date.");
-      setSubmitting(false);
-      return;
-    }
-
-    // Optional: If you want to ensure Expiry date is after or equal to Deadline
-    if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
-      toast.error("Post Expiry Date cannot be before Application Deadline.");
-      setSubmitting(false);
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const token = localStorage.getItem("ccps-token");
-      await createJobPosting(form, token);
+  const { mutate: submitJob, isPending: submitting } = useMutation({
+    mutationFn: ({ form, token }) => createJobPosting(form, token),
+    onSuccess: () => {
       toast.success("Job created successfully!");
       setForm({
         jobTitle: "",
@@ -76,14 +54,58 @@ const CreateJob = () => {
         author: "",
         relevanceScore: "",
       });
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error(err);
       toast.error(err?.response?.data?.message || "Failed to create job");
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Zod validation
+    const result = createJobSchema.safeParse(form);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
+    // Get today's date at start of day (midnight)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Parse deadlines if present (they can be empty strings)
+    const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
+    const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
+
+    // Check deadline date validity
+    if (deadlineDate && deadlineDate < today) {
+      toast.error("Application Deadline cannot be before today's date.");
+      return;
+    }
+
+    // Check expiry date validity
+    if (expiryDate && expiryDate < today) {
+      toast.error("Post Expiry Date cannot be before today's date.");
+      return;
+    }
+
+    // Optional: If you want to ensure Expiry date is after or equal to Deadline
+    if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
+      toast.error("Post Expiry Date cannot be before Application Deadline.");
+      return;
+    }
+
+    const token = localStorage.getItem("ccps-token");
+    submitJob({ form, token });
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-black">

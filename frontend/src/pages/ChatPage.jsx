@@ -3,10 +3,10 @@ import { useAuthContext } from "../context/AuthContext";
 import { useParams } from "react-router-dom";
 import api from "../api/api";
 import Sidebar from "../components/Sidebar";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 function ChatPage() {
 
-  const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const textareaRef = useRef(null);
   const { receiverId } = useParams();
@@ -14,50 +14,42 @@ function ChatPage() {
   const { authUser } = useAuthContext();
   const messagesEndRef = useRef(null);
 
-  /* Fetch messages */
-  const fetchMessages = async () => {
-    try {
+  const { data: messages = [] } = useQuery({
+    queryKey: ["messages", receiverId],
+    queryFn: async () => {
       const res = await api.get(`/api/messages/${receiverId}`);
-      setMessages(res.data);
-
-    } catch (error) {
+      return res.data;
+    },
+    refetchInterval: 3000, // refresh every 3 seconds
+    onError: (error) => {
       console.error("Error fetching messages", error);
-    }
-  };
+    },
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    fetchMessages();
-
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 3000); // refresh every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [receiverId]);
-
-  /* Send message */
-  const handleSendMessage = async () => {
-    if (!text.trim()) return;
-
-    try {
-      await api.post("/api/messages/send", {
-        receiverId,
-        text
-      });
-
+  const { mutate: sendMessage } = useMutation({
+    mutationFn: () => api.post("/api/messages/send", { receiverId, text }),
+    onSuccess: () => {
       setText("");
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'; // Reset height
       }
-      fetchMessages();
-
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["messages", receiverId] });
+    },
+    onError: (error) => {
       console.error("Error sending message", error);
-    }
+    },
+  });
+
+  const queryClient = useQueryClient();
+
+  /* Send message */
+  const handleSendMessage = async () => {
+    if (!text.trim()) return;
+    sendMessage();
   };
 
   const handleKeyDown = (e) => {

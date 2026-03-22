@@ -1,31 +1,34 @@
-import React, { useEffect, useState } from "react";
+
 import { useParams } from "react-router-dom";
-import { fetchApplicants, updateApplicationStatus } from "../../api/useApplications"; 
+import { fetchApplicants, updateApplicationStatus } from "../../api/useApplications";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 const JobApplicants = () => {
   const { jobId } = useParams();
-  const [applicants, setApplicants] = useState([]);
+  const queryClient = useQueryClient();
 
-  const loadApplicants = async () => {
-    try {
-      const data = await fetchApplicants(jobId);
-      setApplicants(data);
-    } catch (error) {
-      console.error("Error fetching applicants:", error);
-    }
-  };
+  const { data: applicants = [] } = useQuery({
+    queryKey: ["applicants", jobId],
+    queryFn: () => fetchApplicants(jobId),
+  });
+
+  const { mutate: changeStatus } = useMutation({
+    mutationFn: ({ id, status }) => updateApplicationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applicants", jobId] });
+    },
+    onError: (error) => {
+      console.error("Error updating status:", error);
+    },
+  });
 
   const handleStatusChange = async (id, status) => {
     try {
-      await updateApplicationStatus(id, status);
-      await loadApplicants();
+      changeStatus({ id, status });
     } catch (error) {
       console.error("Error updating status:", error);
     }
   };
-
-  useEffect(() => {
-    loadApplicants();
-  }, [jobId]);
 
   return (
     <div className="p-6">

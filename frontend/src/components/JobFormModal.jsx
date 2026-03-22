@@ -2,6 +2,25 @@ import React, { useState } from "react";
 import { createJobPosting } from "../api/useCreate"; 
 import { updateJobPosting } from "../api/jobsApi"; 
 import toast from "react-hot-toast";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+
+// Zod schema for job form — shared shape with CreateJob
+const jobFormSchema = z.object({
+  jobTitle: z.string().min(1, "Job title is required"),
+  jobDescription: z.string().min(1, "Job description is required"),
+  Company: z.string().min(1, "Company name is required"),
+  requiredSkills: z.string().optional(),
+  Type: z.enum(["on-campus", "off-campus"]),
+  batch: z.union([z.string().min(1, "Eligible batch is required"), z.number()]),
+  Deadline: z.string().optional(),
+  ApplicationLink: z.string().url("Invalid URL").optional().or(z.literal("")),
+  Expiry: z.string().optional(),
+  author: z.string().optional(),
+  relevanceScore: z.union([z.string(), z.number()]).optional(),
+  _id: z.string().nullable().optional(),
+});
+
 const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
     const isEditMode = !!jobToEdit;
     
@@ -27,46 +46,8 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         _id: jobToEdit?._id || null, 
     });
 
-    const [submitting, setSubmitting] = useState(false);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        if (name === 'batch' || name === 'relevanceScore') {
-            setForm((prev) => ({ ...prev, [name]: Number(value) }));
-        } else {
-            setForm((prev) => ({ ...prev, [name]: value }));
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSubmitting(true);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
-        const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
-
-        if (deadlineDate && deadlineDate < today) {
-            toast.error("Application Deadline cannot be before today's date.");
-            setSubmitting(false);
-            return;
-        }
-
-        if (expiryDate && expiryDate < today) {
-            toast.error("Post Expiry Date cannot be before today's date.");
-            setSubmitting(false);
-            return;
-        }
-
-        if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
-            toast.error("Post Expiry Date cannot be before Application Deadline.");
-            setSubmitting(false);
-            return;
-        }
-
-        try {
+    const { mutate: submitJob, isPending: submitting } = useMutation({
+        mutationFn: async () => {
             const token = localStorage.getItem("ccps-token"); 
             let resultJob;
             
@@ -82,18 +63,61 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
                 resultJob = responseData.job; 
                 toast.success("Job created successfully!");
             }
-
+            return resultJob;
+        },
+        onSuccess: (resultJob) => {
             onFormSubmitSuccess(resultJob); 
-            
             onClose(); 
-
-        } catch (err) {
+        },
+        onError: (err) => {
             console.error(err);
             const errorMessage = err?.message || err?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job`;
             toast.error(errorMessage);
-        } finally {
-            setSubmitting(false);
+        },
+    });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'batch' || name === 'relevanceScore') {
+            setForm((prev) => ({ ...prev, [name]: Number(value) }));
+        } else {
+            setForm((prev) => ({ ...prev, [name]: value }));
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // Zod validation
+        const result = jobFormSchema.safeParse(form);
+        if (!result.success) {
+            const firstError = result.error.errors[0];
+            toast.error(firstError.message);
+            return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
+        const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
+
+        if (deadlineDate && deadlineDate < today) {
+            toast.error("Application Deadline cannot be before today's date.");
+            return;
+        }
+
+        if (expiryDate && expiryDate < today) {
+            toast.error("Post Expiry Date cannot be before today's date.");
+            return;
+        }
+
+        if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
+            toast.error("Post Expiry Date cannot be before Application Deadline.");
+            return;
+        }
+
+        submitJob();
     };
 
     return (

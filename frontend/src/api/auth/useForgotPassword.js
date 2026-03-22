@@ -1,17 +1,14 @@
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../context/AppContext';
 import { useState } from 'react';
+import { useMutation } from "@tanstack/react-query";
 
 const useForgotPassword = () => {
     const [loading, setLoading] = useState(false);
     const { backendUrl } = useAppContext();
 
-    const forgotPassword = async (email) => {
-        const success = handleInputError({ email });
-        if (!success) return;
-
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (email) => {
             const res = await fetch(`${backendUrl}/api/auth/forgot-password`, {
                 method: 'POST',
                 headers: {
@@ -21,7 +18,17 @@ const useForgotPassword = () => {
             })
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
+            return data;
+        }
+    });
 
+    const forgotPassword = async (email) => {
+        const success = handleInputError({ email });
+        if (!success) return;
+
+        setLoading(true);
+        try {
+            await mutation.mutateAsync(email);
             toast.success("Password Reset Link Sent!");
         }
         catch (error) {

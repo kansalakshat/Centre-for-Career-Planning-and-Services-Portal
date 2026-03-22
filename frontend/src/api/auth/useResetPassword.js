@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../../context/AppContext';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from "@tanstack/react-query";
 
 const useResetPassword = () => {
     const [loading, setLoading] = useState(false);
@@ -9,12 +10,8 @@ const useResetPassword = () => {
 
     const navigate = useNavigate();
 
-    const resetPassword = async (password, confirmPassword, resetToken) => {
-        const success = handleInputError({ password, confirmPassword });
-        if (!success) return;
-
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async ({ password, resetToken }) => {
             const res = await fetch(`${backendUrl}/api/auth/reset-password/${resetToken}`, {
                 method: 'POST',
                 headers: {
@@ -24,6 +21,17 @@ const useResetPassword = () => {
             })
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
+            return data;
+        }
+    });
+
+    const resetPassword = async (password, confirmPassword, resetToken) => {
+        const success = handleInputError({ password, confirmPassword });
+        if (!success) return;
+
+        setLoading(true);
+        try {
+            await mutation.mutateAsync({ password, resetToken });
 
             toast.success("Password Reset Successful!");
             toast.success('Redirecting to login page...');
@@ -54,6 +62,6 @@ function handleInputError({ password, confirmPassword }) {
     if (password !== confirmPassword) {
         toast.error('Passwords do not match');
         return false;
-    }
+        }
     return true;
 }

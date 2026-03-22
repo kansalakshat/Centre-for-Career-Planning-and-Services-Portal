@@ -2,11 +2,27 @@ import { useState } from 'react'
 import toast from 'react-hot-toast';
 import { useAuthContext } from '../../context/AuthContext';
 import { useAppContext } from '../../context/AppContext';
+import { useMutation } from "@tanstack/react-query";
 
 const useSignup = () => {
     const [loading, setLoading] = useState(false);
     const { setTempUserId } = useAuthContext();
     const { backendUrl, setShowVerifyEmail } = useAppContext();
+
+    const mutation = useMutation({
+        mutationFn: async ({ body }) => {
+            const res = await fetch(`${backendUrl}/api/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            })
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            return data;
+        }
+    });
 
     const signup = async ({ name, email, password, confirmPassword, role, instituteId, mobileNumber, batch, company, linkedin }) => {
         const success = handleInputError({ name, email, password, confirmPassword, role, instituteId, mobileNumber, batch });
@@ -21,15 +37,7 @@ const useSignup = () => {
                 body.company = company;
                 body.linkedin = linkedin;
             }
-            const res = await fetch(`${backendUrl}/api/auth/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            })
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
+            const data = await mutation.mutateAsync({ body });
             //   localStorage.setItem('ccps-user',JSON.stringify(data));
             //   setAuthUser(data);
             // not setting authUser here because user is not verified yet
@@ -66,4 +74,4 @@ function handleInputError({ name, email, password, confirmPassword, role, instit
 }
 
 
-export default useSignup
+export default useSignup

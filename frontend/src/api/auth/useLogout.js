@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../context/AuthContext.jsx';
 import { useAppContext } from '../../context/AppContext.jsx';
+import { useMutation } from "@tanstack/react-query";
 
 const useLogout = () => {
   const [loading, setLoading] = useState(false);
@@ -10,9 +11,8 @@ const useLogout = () => {
   const { backendUrl } = useAppContext();
   const navigate = useNavigate();
 
-  const logout = async () => {
-    setLoading(true);
-    try {
+  const mutation = useMutation({
+    mutationFn: async () => {
       const res = await fetch(`${backendUrl}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include', 
@@ -22,6 +22,13 @@ const useLogout = () => {
         const data = await res.json();
         throw new Error(data.message || 'Logout failed');
       }
+    }
+  });
+
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await mutation.mutateAsync();
 
       localStorage.removeItem('ccps-user');
       localStorage.removeItem('ccps-token');
