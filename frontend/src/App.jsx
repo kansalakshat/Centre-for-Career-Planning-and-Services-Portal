@@ -25,6 +25,7 @@ import AnalyticsDashboard from './pages/student/AnalyticsDashboard';
 import Home from './pages/Home';
 import Referrals from './pages/Referrals';
 import Dashboard from './pages/Dashboard';
+import LandingPage from './pages/LandingPage';
 
 import AddThread from './components/DiscussionForum/AddThread';
 
@@ -53,12 +54,13 @@ function App() {
 
       <Routes>
 
-        <Route path='/' element={authUser ? <Home /> : <Navigate to='/login' />} />
+        <Route path='/' element={authUser ? <Navigate to='/home' /> : <LandingPage />} />
+        <Route path='/home' element={authUser ? <Home /> : <Navigate to='/login' />} />
         <Route path='/profile' element={authUser ? <Profile /> : <Navigate to='/login' />} />
         <Route path='/discussion-forum' element={authUser ? <DiscussionForum /> : <Navigate to='/login' />} />
         <Route path='/dashboard' element={authUser ? <Dashboard /> : <Navigate to='/login' />} />
-        <Route path='/login' element={authUser ? <Navigate to='/' /> : <Login />} />
-        <Route path='/signup' element={authUser ? <Navigate to='/' /> : <Signup />} />
+        <Route path='/login' element={authUser ? <Navigate to='/home' /> : <Login />} />
+        <Route path='/signup' element={authUser ? <Navigate to='/home' /> : <Signup />} />
         <Route path='/analytics' element={<AnalyticsDashboard />} />
         <Route path='/referrals' element={<Referrals />} />
         <Route path='/resumebuilder' element={<ResumeBuilder />} />

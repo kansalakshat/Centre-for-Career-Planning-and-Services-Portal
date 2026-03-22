@@ -177,8 +177,8 @@ const Alumni = () => {
                   authUser={authUser}
                   requests={requests}
                   setRequests={setRequests}
-                  onEditAlumni={()=>handleEditAlumni(alum._id)}
-                  onDeleteAlumni={()=>handleDeleteAlumni(alum._id)}
+                  onEditAlumni={handleEditAlumni(alum._id)}
+                  onDeleteAlumni={handleDeleteAlumni(alum._id)}
                  />
 
               ))}

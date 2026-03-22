@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import useThreadStore from '../../api/thread/useThreadStore'
 import { useAuthContext } from '../../context/AuthContext'
 import Comment from '../Comment'
