@@ -72,7 +72,7 @@ const CreateJob = () => {
     // Zod validation
     const result = createJobSchema.safeParse(form);
     if (!result.success) {
-      const firstError = result.error.errors[0];
+      const firstError = result.error.issues[0];
       toast.error(firstError.message);
       return;
     }
@@ -104,7 +104,14 @@ const CreateJob = () => {
     }
 
     const token = localStorage.getItem("ccps-token");
-    submitJob({ form, token });
+    submitJob({
+      form: {
+        ...form,
+        batch: Number(form.batch),
+        relevanceScore: form.relevanceScore ? Number(form.relevanceScore) : 0,
+      },
+      token
+    });
   };
 
   return (
