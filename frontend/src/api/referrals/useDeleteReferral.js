@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from "@tanstack/react-query";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL+"/api/referrals" || 'http://localhost:3000/api/referrals';
 
@@ -6,11 +7,8 @@ export const useDeleteReferral = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(null);
 
-  const deleteReferral = async (referralId) => {
-    setIsDeleting(true);
-    setError(null);
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (referralId) => {
       const response = await fetch(`${BASE_URL}/${referralId}`, {
         method: "DELETE",
         headers: {
@@ -25,6 +23,16 @@ export const useDeleteReferral = () => {
       }
 
       const data = await response.json();
+      return data;
+    }
+  });
+
+  const deleteReferral = async (referralId) => {
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      const data = await mutation.mutateAsync(referralId);
       return data;
     } catch (error) {
       setError(error.message || 'Error deleting referral');

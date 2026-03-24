@@ -2,6 +2,25 @@ import React, { useState } from "react";
 import { createJobPosting } from "../api/useCreate"; 
 import { updateJobPosting } from "../api/jobsApi"; 
 import toast from "react-hot-toast";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+
+// Zod schema for job form — shared shape with CreateJob
+const jobFormSchema = z.object({
+  jobTitle: z.string().min(1, "Job title is required"),
+  jobDescription: z.string().min(1, "Job description is required"),
+  Company: z.string().min(1, "Company name is required"),
+  requiredSkills: z.string().optional(),
+  Type: z.enum(["on-campus", "off-campus"]),
+  batch: z.union([z.string().min(1, "Eligible batch is required"), z.number()]),
+  Deadline: z.string().optional(),
+  ApplicationLink: z.string().url("Invalid URL").optional().or(z.literal("")),
+  Expiry: z.string().optional(),
+  author: z.string().optional(),
+  relevanceScore: z.union([z.string(), z.number()]).optional(),
+  _id: z.string().nullable().optional(),
+});
+
 const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
     const isEditMode = !!jobToEdit;
     
@@ -16,7 +35,9 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         jobTitle: jobToEdit?.jobTitle || "",
         jobDescription: jobToEdit?.jobDescription || "",
         Company: jobToEdit?.Company || "",
-        requiredSkills: jobToEdit?.requiredSkills || "",
+        requiredSkills: Array.isArray(jobToEdit?.requiredSkills)
+  ? jobToEdit.requiredSkills.join(", ")
+  : jobToEdit?.requiredSkills || "",
         Type: jobToEdit?.Type || "on-campus",
         batch: jobToEdit?.batch || "",
         Deadline: formatDate(jobToEdit?.Deadline) || "",
@@ -27,7 +48,40 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         _id: jobToEdit?._id || null, 
     });
 
-    const [submitting, setSubmitting] = useState(false);
+const { mutate: submitJob, isPending: submitting } = useMutation({
+    mutationFn: async (formData) => {
+        const token = localStorage.getItem("ccps-token"); 
+        let resultJob;
+        
+        if (isEditMode) {
+            const updateData = {
+                ...formData,
+                requiredSkills: formData.requiredSkills
+                    ? formData.requiredSkills.split(",").map(s => s.trim())
+                    : []
+            };
+            delete updateData._id;
+
+            resultJob = await updateJobPosting(formData._id, updateData, token); 
+            toast.success(`Job "${formData.jobTitle}" updated successfully!`);
+
+        } else {
+            const responseData = await createJobPosting(formData, token);
+            resultJob = responseData.job; 
+            toast.success("Job created successfully!");
+        }
+        return resultJob;
+    },
+    onSuccess: (resultJob) => {
+        onFormSubmitSuccess(resultJob); 
+        onClose(); 
+    },
+    onError: (err) => {
+        console.error(err);
+        const errorMessage = err?.message || err?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job`;
+        toast.error(errorMessage);
+    },
+});
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -38,63 +92,43 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSubmitting(true);
+const handleSubmit = (e) => {
+    e.preventDefault();
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    const result = jobFormSchema.safeParse(form);
+    if (!result.success) {
+        if (!result.success) {
+    const firstError = result.error.issues[0];
+    toast.error(firstError.message);
+    return;
+}
+        toast.error(firstError.message);
+        return;
+    }
 
-        const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
-        const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-        if (deadlineDate && deadlineDate < today) {
-            toast.error("Application Deadline cannot be before today's date.");
-            setSubmitting(false);
-            return;
-        }
+    const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
+    const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
 
-        if (expiryDate && expiryDate < today) {
-            toast.error("Post Expiry Date cannot be before today's date.");
-            setSubmitting(false);
-            return;
-        }
+    if (deadlineDate && deadlineDate < today) {
+        toast.error("Application Deadline cannot be before today's date.");
+        return;
+    }
 
-        if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
-            toast.error("Post Expiry Date cannot be before Application Deadline.");
-            setSubmitting(false);
-            return;
-        }
+    if (expiryDate && expiryDate < today) {
+        toast.error("Post Expiry Date cannot be before today's date.");
+        return;
+    }
 
-        try {
-            const token = localStorage.getItem("ccps-token"); 
-            let resultJob;
-            
-            if (isEditMode) {
-                const updateData = {...form};
-                delete updateData._id; 
+    if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
+        toast.error("Post Expiry Date cannot be before Application Deadline.");
+        return;
+    }
 
-                resultJob = await updateJobPosting(form._id, updateData, token); 
-                toast.success(`Job "${form.jobTitle}" updated successfully!`);
-
-            } else {
-                const responseData = await createJobPosting(form, token);
-                resultJob = responseData.job; 
-                toast.success("Job created successfully!");
-            }
-
-            onFormSubmitSuccess(resultJob); 
-            
-            onClose(); 
-
-        } catch (err) {
-            console.error(err);
-            const errorMessage = err?.message || err?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job`;
-            toast.error(errorMessage);
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    submitJob(form);
+};
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

@@ -1,42 +1,45 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../api/api";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export default function PrivacySettings() {
 
   const [allowMessages, setAllowMessages] = useState(true);
   const [departmentOnly, setDepartmentOnly] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await api.get("/alumni/privacy");
-        if (res.data?.privacySettings) {
-          setAllowMessages(res.data.privacySettings.allowMessages);
-          setDepartmentOnly(res.data.privacySettings.departmentOnly);
-        }
-      } catch (error) {
-        console.error("Failed to load privacy settings:", error);
-      } finally {
-        setLoading(false);
+  const { isLoading: loading } = useQuery({
+    queryKey: ["privacy-settings"],
+    queryFn: async () => {
+      const res = await api.get("/alumni/privacy");
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data?.privacySettings) {
+        setAllowMessages(data.privacySettings.allowMessages);
+        setDepartmentOnly(data.privacySettings.departmentOnly);
       }
-    };
-    fetchSettings();
-  }, []);
+    },
+    onError: (error) => {
+      console.error("Failed to load privacy settings:", error);
+    },
+  });
 
-  const updatePrivacy = async () => {
-    try {
-      await api.put("/alumni/privacy", {
-        allowMessages,
-        departmentOnly
-      });
-
+  const { mutate: updatePrivacy } = useMutation({
+    mutationFn: () => api.put("/alumni/privacy", {
+      allowMessages,
+      departmentOnly
+    }),
+    onSuccess: () => {
       alert("Privacy settings updated");
-
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error(error);
-    }
-  };
+    },
+  });
+
+  if(loading){
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-lg">

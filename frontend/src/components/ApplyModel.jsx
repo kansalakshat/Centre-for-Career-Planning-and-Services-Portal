@@ -1,6 +1,15 @@
-import React, { useState } from "react";
 import { applyToJob } from "../api/useApply";
 import { toast } from "react-hot-toast";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+
+// Zod schema for apply form
+const applySchema = z.object({
+  resume: z.string().url("Invalid resume URL").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
 
 const ApplyModal = ({ jobId, applicationLink, userProfile, onClose, onApplied }) => {
   const [formData, setFormData] = useState({
@@ -8,7 +17,23 @@ const ApplyModal = ({ jobId, applicationLink, userProfile, onClose, onApplied })
     phone: userProfile?.phone || "",
     address: userProfile?.address || "",
   });
-  const [loading, setLoading] = useState(false);
+
+  const { mutate: submitApplication, isPending: loading } = useMutation({
+    mutationFn: () => applyToJob({
+      jobId,
+      resume: formData.resume || "",
+      phone: formData.phone || "",
+      address: formData.address || "",
+    }),
+    onSuccess: () => {
+      toast.success("Applied successfully");
+      onApplied();
+      onClose();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Application failed");
+    },
+  });
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -19,23 +44,17 @@ const ApplyModal = ({ jobId, applicationLink, userProfile, onClose, onApplied })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!window.confirm("Apply with saved details?")) return;
-    setLoading(true);
-    try {
-      await applyToJob({
-        jobId,
-        resume: formData.resume || "",
-        phone: formData.phone || "",
-        address: formData.address || "",
-      });
-      toast.success("Applied successfully");
-      onApplied();
-      onClose();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Application failed");
-    } finally {
-      setLoading(false);
+
+    // Zod validation
+    const result = applySchema.safeParse(formData);
+    if (!result.success) {
+      const firstError = result.error?.errors?.[0];
+      toast.error(firstError?.message || "Please check your inputs");
+      return;
     }
+
+    if (!window.confirm("Apply with saved details?")) return;
+    submitApplication();
   };
 
   return (

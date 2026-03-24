@@ -18,7 +18,7 @@ const initialForm = {
 
 const AdminAlumniPage = () => {
   const navigate = useNavigate();
-  const { addAlumni, updateAlumni, deleteAlumni, alumni, refetch } = useAlumniAdmin();
+  const { addAlumni, updateAlumni, deleteAlumni, alumni } = useAlumniAdmin();
 
   const [searchId, setSearchId] = useState("");
   const [form, setForm] = useState(initialForm);
@@ -73,7 +73,6 @@ const AdminAlumniPage = () => {
         await addAlumni(form, token);
         toast.success("Alumni added successfully");
       }
-      refetch();
       resetForm();
     } catch (err) {
       console.error(err);
@@ -89,7 +88,6 @@ const AdminAlumniPage = () => {
         await deleteAlumni(editingId, token);
         toast.success("Alumni deleted");
         resetForm();
-        refetch();
       } catch (error) {
         toast.error("Failed to delete alumni");
       }
