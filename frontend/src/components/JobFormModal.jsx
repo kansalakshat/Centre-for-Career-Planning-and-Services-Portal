@@ -35,7 +35,9 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         jobTitle: jobToEdit?.jobTitle || "",
         jobDescription: jobToEdit?.jobDescription || "",
         Company: jobToEdit?.Company || "",
-        requiredSkills: jobToEdit?.requiredSkills || "",
+        requiredSkills: Array.isArray(jobToEdit?.requiredSkills)
+  ? jobToEdit.requiredSkills.join(", ")
+  : jobToEdit?.requiredSkills || "",
         Type: jobToEdit?.Type || "on-campus",
         batch: jobToEdit?.batch || "",
         Deadline: formatDate(jobToEdit?.Deadline) || "",
@@ -46,35 +48,40 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         _id: jobToEdit?._id || null, 
     });
 
-    const { mutate: submitJob, isPending: submitting } = useMutation({
-        mutationFn: async () => {
-            const token = localStorage.getItem("ccps-token"); 
-            let resultJob;
-            
-            if (isEditMode) {
-                const updateData = {...form};
-                delete updateData._id; 
+const { mutate: submitJob, isPending: submitting } = useMutation({
+    mutationFn: async (formData) => {
+        const token = localStorage.getItem("ccps-token"); 
+        let resultJob;
+        
+        if (isEditMode) {
+            const updateData = {
+                ...formData,
+                requiredSkills: formData.requiredSkills
+                    ? formData.requiredSkills.split(",").map(s => s.trim())
+                    : []
+            };
+            delete updateData._id;
 
-                resultJob = await updateJobPosting(form._id, updateData, token); 
-                toast.success(`Job "${form.jobTitle}" updated successfully!`);
+            resultJob = await updateJobPosting(formData._id, updateData, token); 
+            toast.success(`Job "${formData.jobTitle}" updated successfully!`);
 
-            } else {
-                const responseData = await createJobPosting(form, token);
-                resultJob = responseData.job; 
-                toast.success("Job created successfully!");
-            }
-            return resultJob;
-        },
-        onSuccess: (resultJob) => {
-            onFormSubmitSuccess(resultJob); 
-            onClose(); 
-        },
-        onError: (err) => {
-            console.error(err);
-            const errorMessage = err?.message || err?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job`;
-            toast.error(errorMessage);
-        },
-    });
+        } else {
+            const responseData = await createJobPosting(formData, token);
+            resultJob = responseData.job; 
+            toast.success("Job created successfully!");
+        }
+        return resultJob;
+    },
+    onSuccess: (resultJob) => {
+        onFormSubmitSuccess(resultJob); 
+        onClose(); 
+    },
+    onError: (err) => {
+        console.error(err);
+        const errorMessage = err?.message || err?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job`;
+        toast.error(errorMessage);
+    },
+});
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -85,40 +92,43 @@ const JobFormModal = ({ jobToEdit, onFormSubmitSuccess, onClose }) => {
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+const handleSubmit = (e) => {
+    e.preventDefault();
 
-        // Zod validation
-        const result = jobFormSchema.safeParse(form);
+    const result = jobFormSchema.safeParse(form);
+    if (!result.success) {
         if (!result.success) {
-            const firstError = result.error.errors[0];
-            toast.error(firstError.message);
-            return;
-        }
+    const firstError = result.error.issues[0];
+    toast.error(firstError.message);
+    return;
+}
+        toast.error(firstError.message);
+        return;
+    }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-        const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
-        const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
+    const deadlineDate = form.Deadline ? new Date(form.Deadline) : null;
+    const expiryDate = form.Expiry ? new Date(form.Expiry) : null;
 
-        if (deadlineDate && deadlineDate < today) {
-            toast.error("Application Deadline cannot be before today's date.");
-            return;
-        }
+    if (deadlineDate && deadlineDate < today) {
+        toast.error("Application Deadline cannot be before today's date.");
+        return;
+    }
 
-        if (expiryDate && expiryDate < today) {
-            toast.error("Post Expiry Date cannot be before today's date.");
-            return;
-        }
+    if (expiryDate && expiryDate < today) {
+        toast.error("Post Expiry Date cannot be before today's date.");
+        return;
+    }
 
-        if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
-            toast.error("Post Expiry Date cannot be before Application Deadline.");
-            return;
-        }
+    if (deadlineDate && expiryDate && expiryDate < deadlineDate) {
+        toast.error("Post Expiry Date cannot be before Application Deadline.");
+        return;
+    }
 
-        submitJob();
-    };
+    submitJob(form);
+};
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
