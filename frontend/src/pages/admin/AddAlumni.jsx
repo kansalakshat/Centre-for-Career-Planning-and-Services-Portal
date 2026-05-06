@@ -3,6 +3,22 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import useAlumniAdmin from "../../api/alumni/useAlumniAdmin";
 import Sidebar from "../../components/Sidebar";
+import { z } from "zod";
+
+// Zod schema for alumni form
+const alumniSchema = z.object({
+  name: z.string().min(1, "Full name is required"),
+  company: z.string().min(1, "Company is required"),
+  linkedin: z.string().min(1, "LinkedIn URL is required"),
+  InstituteId: z.string().min(1, "Institute ID is required"),
+  MobileNumber: z.string().min(1, "Mobile number is required"),
+  Email: z.string().email("Invalid email address"),
+  batch: z.string().min(1, "Batch year is required"),
+  jobs: z.array(z.object({
+    id: z.string().min(1, "Job ID is required"),
+    role: z.string().min(1, "Job role is required"),
+  })).min(1, "At least one job is required"),
+});
 
 const initialForm = {
   name: "",
@@ -16,7 +32,7 @@ const initialForm = {
 };
 
 const AddAlumni = () => {
-  const { addAlumni, updateAlumni, deleteAlumni, alumni, refetch } = useAlumniAdmin();
+  const { addAlumni, updateAlumni, deleteAlumni, alumni} = useAlumniAdmin();
 
   const [searchId, setSearchId] = useState("");
   const [form, setForm] = useState(initialForm);
@@ -68,6 +84,15 @@ const AddAlumni = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Zod validation
+    const result = alumniSchema.safeParse(form);
+    if (!result.success) {
+      const firstError = result.error?.errors?.[0];
+      toast.error(firstError?.message || "Please fill all required fields correctly");
+      return;
+    }
+
     const token = localStorage.getItem("ccps-token");
     try {
       if (isEditMode && editingId) {
@@ -77,7 +102,6 @@ const AddAlumni = () => {
         await addAlumni(form, token);
         toast.success("Alumni added successfully");
       }
-      refetch();
       resetForm();
     } catch (err) {
       console.error(err);
@@ -93,7 +117,6 @@ const AddAlumni = () => {
         await deleteAlumni(editingId, token);
         toast.success("Alumni deleted");
         resetForm();
-        refetch();
       } catch (error) {
         toast.error("Failed to delete alumni");
       }

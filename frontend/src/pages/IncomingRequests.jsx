@@ -1,43 +1,51 @@
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/api";
 import Sidebar from "../components/Sidebar";
 
 const IncomingRequests = () => {
 
-  const [requests, setRequests] = useState([]);
+  const queryClient = useQueryClient();
 
-  const fetchRequests = async () => {
-    try {
+  const { data: requests = [] } = useQuery({
+    queryKey: ["incoming-requests"],
+    queryFn: async () => {
       const res = await api.get("/api/connect/incoming");
       const pendingRequests = res.data.requests.filter(req => req.status === "pending");
-      setRequests(pendingRequests);
-    } catch (error) {
+      return pendingRequests;
+    },
+    onError: (error) => {
       console.error(error);
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  const acceptRequest = async (id) => {
-    try {
-      await api.put(`/api/connect/accept/${id}`);
-      fetchRequests();
-    } catch (error) {
+  const { mutate: accept } = useMutation({
+    mutationFn: (id) => api.put(`/api/connect/accept/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incoming-requests"] });
+    },
+    onError: (error) => {
       console.error("Failed to accept request:", error);
       // Consider showing a toast/alert to the user
-    }
+    },
+  });
+
+  const { mutate: decline } = useMutation({
+    mutationFn: (id) => api.put(`/api/connect/decline/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incoming-requests"] });
+    },
+    onError: (error) => {
+      console.error("Failed to decline request:", error);
+      // Consider showing a toast/alert to the user
+    },
+  });
+
+  const acceptRequest = async (id) => {
+    accept(id);
   };
 
   const declineRequest = async (id) => {
-    try {
-      await api.put(`/api/connect/decline/${id}`);
-      fetchRequests();
-    } catch (error) {
-      console.error("Failed to decline request:", error);
-      // Consider showing a toast/alert to the user
-    }
+    decline(id);
   };
 
   return (

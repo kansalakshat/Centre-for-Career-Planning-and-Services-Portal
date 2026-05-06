@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useAuthContext } from '../../context/AuthContext';
+import { useMutation } from "@tanstack/react-query";
+
 const BASE_URL = import.meta.env.VITE_BACKEND_URL+"/api" || 'http://localhost:3000/api';
 
 export const useRequestReferral = () => {
@@ -7,11 +9,8 @@ export const useRequestReferral = () => {
   const [error, setError] = useState(null);
   const { authUser } = useAuthContext();
 
-  const requestReferral = async (referralData) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (referralData) => {
       const response = await fetch(`${BASE_URL}/referrals/request`, {
         method: "POST",
         headers: {
@@ -31,6 +30,16 @@ export const useRequestReferral = () => {
       }
 
       const data = await response.json();
+      return data;
+    }
+  });
+
+  const requestReferral = async (referralData) => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const data = await mutation.mutateAsync(referralData);
       return data;
     } catch (error) {
       setError(error.message || 'Error requesting referral');

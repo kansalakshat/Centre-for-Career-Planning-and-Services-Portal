@@ -8,6 +8,7 @@ import AddEditAlumniModal from "../../components/AddEditAlumniModal";
 import AlumniCard from "../../components/AlumniCard";
 import useAlumniAdmin from "../../api/alumni/useAlumniAdmin";
 import toast from "react-hot-toast";
+import { useQuery, useMutation} from "@tanstack/react-query";
 
 const Alumni = () => {
   const { authUser } = useAuthContext();
@@ -16,7 +17,6 @@ const Alumni = () => {
   const [alumniList, setAlumniList] = useState([]);
   const [selectedAlumni, setSelectedAlumni] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [requests, setRequests] = useState([]);
 
   const { loading: loadingAll, alumni } = useGetAllAlumni();
   const { loading: loadingSearch, getAlumni } = useGetAlumni();
@@ -26,24 +26,28 @@ const Alumni = () => {
     setAlumniList(alumni);
   }, [alumni]);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await api.get("/api/connect/my-requests");
-        setRequests(res.data);
-      } catch (error) {
-        console.error("Error fetching requests", error);
-      }
-    };
+  const { data: requests = [] , refetch: refetchRequests } = useQuery({
+    queryKey: ["my-requests"],
+    queryFn: async () => {
+      const res = await api.get("/api/connect/my-requests");
+      return res.data;
+    },
+    enabled: authUser?.role === "student",
+    refetchInterval: authUser?.role === "student" ? 10000 : false,
+    onError: (error) => {
+      console.error("Error fetching requests", error);
+    },
+  });
 
-  if (authUser?.role === "student") {
-    fetchRequests();
-
-    const interval = setInterval(fetchRequests, 10000);
-
-    return () => clearInterval(interval);
-  }
-}, [authUser]);
+  const { mutate: removeAlumni } = useMutation({
+    mutationFn: ({ id, token }) => deleteAlumni(id, token),
+    onSuccess: (_, { id }) => {
+      setAlumniList(alumniList.filter((a) => a._id !== id));
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete alumni: ${error.message || error}`);
+    },
+  });
 
   const handleSearch = async () => {
     const data = await getAlumni(searchType, search);
@@ -67,12 +71,7 @@ const Alumni = () => {
     const token = localStorage.getItem("ccps-token");
     if (!id) return;
     if (window.confirm("Are you sure you want to delete this alumni?")) {
-      try {
-        await deleteAlumni(id, token);
-        setAlumniList(alumniList.filter((a) => a._id !== id));
-      } catch (error) {
-        toast.error(`Failed to delete alumni: ${error.message || error}`);
-      }
+      removeAlumni({ id, token });
     }
   }
 
@@ -176,7 +175,7 @@ const Alumni = () => {
                   index={index}
                   authUser={authUser}
                   requests={requests}
-                  setRequests={setRequests}
+                  setRequests={refetchRequests}
                   onEditAlumni={handleEditAlumni(alum._id)}
                   onDeleteAlumni={handleDeleteAlumni(alum._id)}
                  />
@@ -196,7 +195,7 @@ const Alumni = () => {
           onUpdateAlumni={onUpdateExistingAlumni}
           onDeleteAlumni={onDeleteExistingAlumni}
           onClose={closeAddEditModal}
-          setRequests={setRequests}
+          setRequests={refetchRequests}
         />
       )}
     </div>

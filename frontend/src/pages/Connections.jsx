@@ -1,29 +1,24 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
 function Connections() {
-  const [connections, setConnections] = useState([]);
   const navigate = useNavigate();
 
-  const fetchConnections = async () => {
-    try {
+  const { data: connections = [] } = useQuery({
+    queryKey: ["connections"],
+    queryFn: async () => {
       const res = await api.get("/api/connect/incoming");
-
       const acceptedConnections = res.data.requests.filter(
         (req) => req.status === "accepted"
       );
-
-      setConnections(acceptedConnections);
-    } catch (err) {
+      return acceptedConnections;
+    },
+    onError: (err) => {
       console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchConnections();
-  }, []);
+    },
+  });
 
   return (
     <div className="flex min-h-screen">

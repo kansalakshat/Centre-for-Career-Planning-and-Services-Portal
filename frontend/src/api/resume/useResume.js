@@ -1,15 +1,14 @@
 import { useState } from 'react';
+import { useMutation } from "@tanstack/react-query";
+
 const BASE_URL = import.meta.env.VITE_BACKEND_URL+"/api" || 'http://localhost:3000/api';
 
 export const useResume = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const generateResume = async (formData) => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (formData) => {
       const response = await fetch(`${BASE_URL}/resume/generate`, {
         method: 'POST',
         headers: {
@@ -23,17 +22,30 @@ export const useResume = () => {
       }
 
       const blobData = await response.blob();
-      
+      return { blobData, formData };
+    }
+  });
+
+  const generateResume = async (formData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { blobData } = await mutation.mutateAsync(formData);
+
       const url = window.URL.createObjectURL(blobData);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${formData.personalInfo.name.replace(/\s+/g, '_')}_resume.pdf`);
+      link.setAttribute(
+        'download',
+        `${formData.personalInfo.name.replace(/\s+/g, '_')}_resume.pdf`
+      );
       document.body.appendChild(link);
       link.click();
-      
+
       window.URL.revokeObjectURL(url);
       link.remove();
-      
+
       setLoading(false);
       return true;
     } catch (error) {

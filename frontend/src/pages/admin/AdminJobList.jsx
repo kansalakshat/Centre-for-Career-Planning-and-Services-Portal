@@ -20,6 +20,7 @@ const AdminJobList = () => {
   });
 
   const jobs = data?.jobs || [];
+  console.log("Jobs:",jobs);
 
   if (isLoading) {
     return (

@@ -1,34 +1,36 @@
-import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL + "/api/alumni" ||
-  "http://localhost:3000/api/alumni";
+  (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000") +
+  "/api/alumni";
 
 const useAlumniAdmin = () => {
-  const [alumni, setAlumni] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch all alumni
   const fetchAllAlumni = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${BASE_URL}`);
-      const data = await res.json();
-      if (!res.ok || data.message) {
-        throw new Error(data.message || "Failed to fetch alumni");
-      }
-      setAlumni(data);
-    } catch (error) {
-      toast.error(error.message || "Error loading alumni");
-    } finally {
-      setLoading(false);
+    const res = await fetch(BASE_URL);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to fetch alumni");
     }
+
+    return data;
   };
 
+  const { data: alumni = [], isLoading } = useQuery({
+    queryKey: ["alumni"],
+    queryFn: fetchAllAlumni,
+    onError: (error) => {
+      toast.error(error.message || "Error loading alumni");
+    },
+  });
+
   // Add alumni
-  const addAlumni = async (formData, token) => {
-    try {
+  const addMutation = useMutation({
+    mutationFn: async ({ formData, token }) => {
       const res = await fetch(BASE_URL, {
         method: "POST",
         headers: {
@@ -40,17 +42,23 @@ const useAlumniAdmin = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add alumni");
-
+      return data;
+    },
+    onSuccess: () => {
       toast.success("Alumni added successfully!");
-      await fetchAllAlumni();
-    } catch (error) {
+      queryClient.invalidateQueries(["alumni"]);
+    },
+    onError: (error) => {
       toast.error(error.message || "Error adding alumni");
-    }
-  };
+    },
+  });
+
+  const addAlumni = (formData, token) =>
+    addMutation.mutateAsync({ formData, token });
 
   // Delete alumni
-  const deleteAlumni = async (id, token) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async ({ id, token }) => {
       const res = await fetch(`${BASE_URL}/${id}`, {
         method: "DELETE",
         headers: {
@@ -60,17 +68,23 @@ const useAlumniAdmin = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to delete alumni");
-
+      return data;
+    },
+    onSuccess: () => {
       toast.success("Alumni deleted successfully!");
-      await fetchAllAlumni();
-    } catch (error) {
+      queryClient.invalidateQueries(["alumni"]);
+    },
+    onError: (error) => {
       toast.error(error.message || "Error deleting alumni");
-    }
-  };
+    },
+  });
+
+  const deleteAlumni = (id, token) =>
+    deleteMutation.mutateAsync({ id, token });
 
   // Update alumni
-  const updateAlumni = async (id, updatedData, token) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, updatedData, token }) => {
       const res = await fetch(`${BASE_URL}/${id}`, {
         method: "PUT",
         headers: {
@@ -82,25 +96,26 @@ const useAlumniAdmin = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to update alumni");
-
+      return data;
+    },
+    onSuccess: () => {
       toast.success("Alumni updated successfully!");
-      await fetchAllAlumni();
-    } catch (error) {
+      queryClient.invalidateQueries(["alumni"]);
+    },
+    onError: (error) => {
       toast.error(error.message || "Error updating alumni");
-    }
-  };
+    },
+  });
 
-  useEffect(() => {
-    fetchAllAlumni();
-  }, []);
+  const updateAlumni = (id, updatedData, token) =>
+    updateMutation.mutateAsync({ id, updatedData, token });
 
   return {
     alumni,
-    loading,
+    loading: isLoading,
     addAlumni,
     deleteAlumni,
     updateAlumni,
-    refetch: fetchAllAlumni,
   };
 };
 
