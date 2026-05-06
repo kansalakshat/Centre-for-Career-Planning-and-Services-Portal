@@ -21,6 +21,16 @@ export const saveJob = async (jobId) => {
 };
 
 export const fetchSavedApplications = async () => {
-  const res = await api.get("/api/saved-jobs/saved");
-  return res.data.savedJobs; 
+  try {
+    const res = await api.get("/api/saved-jobs/saved");
+    return res.data.savedJobs;
+  } catch (error) {
+    console.error("Error fetching saved applications:", error);
+    throw error;
+  }
+};
+
+export const unsaveJob = async (jobId) => {
+  const res = await api.delete(`/api/saved-jobs/saved/${jobId}`);
+  return res.data;
 };

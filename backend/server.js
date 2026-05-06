@@ -4,12 +4,13 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import apiRouter from "./routes/index.router.js";
+import scheduleJobs from "./utils/scheduler.js";
 import connectionRouter from "./routes/connect.routes.js";
 import messageRouter from "./routes/message.routes.js"
 dotenv.config();
 
 const port = process.env.PORT || 3000;
-  
+
 const app = express();
 
 app.use(
@@ -31,8 +32,8 @@ app.use("/api/connect", connectionRouter);
 app.use("/api/messages", messageRouter);
 
 // Start the server
-app.listen(port, () => {
-  connectDB();
+app.listen(port, async () => {
+  await connectDB();
+  scheduleJobs();
   console.log(`Server is running at port ${port}`);
 });
-

@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Alumni from "../models/Alumni.model.js";
 import crypto from 'crypto';
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
@@ -10,7 +11,7 @@ dotenv.config();
 
 export const signup = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, phone, address } = req.body;
 
         if (role === "student" || role === "admin") {
             if (!email.endsWith("@iitbhilai.ac.in")) {
@@ -19,7 +20,7 @@ export const signup = async (req, res) => {
                     message: 'Only IIT Bhilai emails are allowed',
                 });
             }
-        } else if (role === "recruiter") {
+        } else if (role === "recruiter" || role === "alumni") {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 return res.status(400).json({
@@ -30,8 +31,19 @@ export const signup = async (req, res) => {
         } else {
             return res.status(400).json({
                 success: false,
-                message: "Invalid role specified. Must be 'student', 'admin', or 'recruiter'."
+                message: "Invalid role specified. Must be 'student', 'admin', 'recruiter', or 'alumni'."
             });
+        }
+
+        // Validate alumni-specific fields
+        if (role === "alumni") {
+            const { instituteId, mobileNumber, batch } = req.body;
+            if (!instituteId || !mobileNumber || !batch) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Institute ID, Mobile Number, and Batch are required for alumni signup."
+                });
+            }
         }
         const user = await User.findOne({ email });
         const verificationToken = Math.floor(100000 + (Math.random() * 900000)).toString();
@@ -44,9 +56,20 @@ export const signup = async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, salt);
 
             user.name = name;
+            user.role = role;
             user.password = hashedPassword;
+            user.phone = phone || user.phone;
+            user.address = address || user.address;
             user.verificationToken = verificationToken;
             user.verificationTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000;
+
+            // Update alumni data if re-signing up as alumni
+            if (role === "alumni") {
+                const { instituteId, mobileNumber, batch, company, linkedin } = req.body;
+                user.pendingAlumniData = { instituteId, mobileNumber, batch, company, linkedin };
+            } else {
+                user.pendingAlumniData = undefined;
+            }
 
             await user.save();
             await sendVerificationEmail(user.email, verificationToken);
@@ -63,8 +86,16 @@ export const signup = async (req, res) => {
             email,
             role,
             password: hashedPassword,
+            phone,
+            address,
             verificationToken,
             verificationTokenExpiresAt: Date.now() + 1 * 60 * 60 * 1000  // 1 hour
+        }
+
+        // Store alumni-specific data temporarily for creation after email verification
+        if (role === "alumni") {
+            const { instituteId, mobileNumber, batch, company, linkedin } = req.body;
+            userData.pendingAlumniData = { instituteId, mobileNumber, batch, company, linkedin };
         }
 
         const newUser = new User(userData);
@@ -111,8 +142,6 @@ export const sendCodeAgain = async (req, res) => {
 }
 
 export const verifyEmail = async (req, res) => {
-
-
     try {
         const { userId, code } = req.body;
 
@@ -126,7 +155,7 @@ export const verifyEmail = async (req, res) => {
             _id: userId,
             verificationToken: stringCode,
             verificationTokenExpiresAt: { $gt: Date.now() }
-        })
+        });
 
         if (!user) {
             return res.status(400).json({ success: false, message: 'Invalid or expired verification code' });
@@ -136,19 +165,44 @@ export const verifyEmail = async (req, res) => {
         user.verificationToken = undefined;
         user.verificationTokenExpiresAt = undefined;
 
+        // If alumni, create the Alumni record from pending data
+        if (user.role === "alumni" && user.pendingAlumniData) {
+            await Alumni.findOneAndUpdate(
+                { Email: user.email },
+                {
+                    $set: {
+                        name: user.name,
+                        Email: user.email,
+                        InstituteId: user.pendingAlumniData.instituteId,
+                        MobileNumber: user.pendingAlumniData.mobileNumber,
+                        batch: user.pendingAlumniData.batch,
+                        company: user.pendingAlumniData.company || "",
+                        linkedin: user.pendingAlumniData.linkedin || "",
+                    }
+                },
+                { upsert: true, runValidators: true }
+            );
+
+            user.pendingAlumniData = undefined;
+        }
+
         const newUser = await user.save();
 
         const token = generateTokenAndSetCookie(newUser._id, res);
 
         const userData = {
-
             _id: newUser._id,
             name: newUser.name,
             email: newUser.email,
             role: newUser.role,
-        }
+        };
 
-        res.status(201).json({ success: true, message: "Email verified successfully", userData, token });
+        res.status(201).json({
+            success: true,
+            message: "Email verified successfully",
+            userData,
+            token
+        });
 
     } catch (e) {
         console.error("Error in verifyEmail controller", e.message);

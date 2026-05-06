@@ -40,6 +40,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    batch: {
+        type: Number,
+        required: false
+    },
+    skills: {
+        type: [String],
+        default: []
+    },
     privacySettings: {
         allowMessages: {
             type: Boolean,
@@ -49,6 +57,10 @@ const userSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         }
+    },
+    pendingAlumniData: {
+        type: Object,
+        default: undefined
     }
 })
 
