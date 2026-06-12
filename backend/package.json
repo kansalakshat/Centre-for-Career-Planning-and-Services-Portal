@@ -12,6 +12,7 @@
   "author": "OPENLAKE",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^5.0.4",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.0",
     "cloudinary": "^2.7.0",
