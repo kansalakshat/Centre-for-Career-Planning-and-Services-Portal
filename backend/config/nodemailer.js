@@ -8,8 +8,8 @@ console.log("SMTP_SENDER_EMAIL:", process.env.SMTP_SENDER_EMAIL);
 console.log("SMTP_PASSWORD length:", process.env.SMTP_PASSWORD?.length);
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",//"smtp-relay.brevo.com"
-    port: 587,
-    secure: false, // true for port 465, false for other ports
+    port: 465,
+    secure: true, // true for port 465, false for other ports
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
