@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config({});
-
+console.log("SMTP_USER:", process.env.SMTP_USER);
+console.log("SMTP_SENDER_EMAIL:", process.env.SMTP_SENDER_EMAIL);
+console.log("SMTP_PASSWORD length:", process.env.SMTP_PASSWORD?.length);
 import { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, VERIFICATION_EMAIL_TEMPLATE } from "../assets/emailTemplates.js";
 import transporter from "../config/nodemailer.js";
 
