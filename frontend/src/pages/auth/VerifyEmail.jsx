@@ -34,7 +34,8 @@ const VerifyEmail = () => {
             <form className='relative bg-white p-8 rounded-xl' onSubmit={handleSubmit}>
                 <h1 className='text-center text-2xl font-bold mb-1.5'>Verify Your Email</h1>
                 <div>
-                    <p className='text-center mb-5'>Enter the 6-digit code sent to your email address<br /> (Check your spam folder if you don't see it)</p>
+                    <p className='text-center mb-5'>Enter the 6-digit code sent to your email address</p>
+                    <p className='text-center mb-5'>(Check your spam folder if you don't see it)</p>
 
                     <div>
                         <label className="label p-2">
