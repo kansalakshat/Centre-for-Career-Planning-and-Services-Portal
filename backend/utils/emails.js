@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
-import * as Brevo from '@getbrevo/brevo';
+import SibApiV3Sdk from '@getbrevo/brevo';
 import apiInstance from "../config/nodemailer.js";
 import { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, VERIFICATION_EMAIL_TEMPLATE } from "../assets/emailTemplates.js";
 
 const sendVerificationEmail = async (email, verificationToken) => {
     try {
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: "kansal.akshat757@gmail.com", name: "CCPS Portal" };
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Verify Your Email";
@@ -21,7 +21,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
 
 const sendPasswordResetEmail = async (email, resetURL) => {
     try {
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: "kansal.akshat757@gmail.com", name: "CCPS Portal" };
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Reset your password";
@@ -36,7 +36,7 @@ const sendPasswordResetEmail = async (email, resetURL) => {
 
 const sendPasswordResetSuccessEmail = async (email) => {
     try {
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: "kansal.akshat757@gmail.com", name: "CCPS Portal" };
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Password Reset Successful";
@@ -51,7 +51,7 @@ const sendPasswordResetSuccessEmail = async (email) => {
 
 const sendEmail = async ({ to, subject, html }) => {
     try {
-        const sendSmtpEmail = new Brevo.SendSmtpEmail();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { email: "kansal.akshat757@gmail.com", name: "CCPS Portal" };
         sendSmtpEmail.to = [{ email: to }];
         sendSmtpEmail.subject = subject;
