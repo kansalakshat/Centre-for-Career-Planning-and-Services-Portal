@@ -2,7 +2,10 @@ import dotenv from "dotenv";
 dotenv.config({});
 
 import nodemailer from 'nodemailer'
-
+console.log("=== NODEMAILER LOADED ===");
+console.log("SMTP_USER:", process.env.SMTP_USER);
+console.log("SMTP_SENDER_EMAIL:", process.env.SMTP_SENDER_EMAIL);
+console.log("SMTP_PASSWORD length:", process.env.SMTP_PASSWORD?.length);
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",//"smtp-relay.brevo.com"
     port: 587,
