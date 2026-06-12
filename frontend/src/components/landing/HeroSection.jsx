@@ -7,7 +7,7 @@ const HeroSection = ({ onLoginClick, onSignupClick }) => {
       {/* Background Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/hero.jpg"
+          src="/images/bg.webp"
           alt="Campus Background"
           className="w-full h-full object-cover opacity-60"
         />
