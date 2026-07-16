@@ -3,7 +3,7 @@ import { BROCHURE_LINK } from '../../constants/links';
 
 const HeroSection = ({ onLoginClick, onSignupClick }) => {
   return (
-    <section className="relative h-[85vh] bg-gray-900 overflow-hidden">
+    <section className="relative min-h-[85vh] bg-gray-900 overflow-hidden">
       {/* Background Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -14,7 +14,7 @@ const HeroSection = ({ onLoginClick, onSignupClick }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/90 to-transparent" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-white">
+      <div className="relative z-10 max-w-7xl mx-auto min-h-[85vh] px-4 sm:px-6 lg:px-8 py-12 md:py-0 flex flex-col md:flex-row items-center justify-between text-white">
         {/* Left Content */}
         <div className="md:w-3/5 space-y-6">
           <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight">
